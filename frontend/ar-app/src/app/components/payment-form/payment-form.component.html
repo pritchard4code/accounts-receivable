@@ -1,0 +1,92 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Record Payment</h2>
+    <button mat-stroked-button class="secondary-btn" routerLink="/payments">
+      <mat-icon>arrow_back</mat-icon> Back
+    </button>
+  </div>
+
+  <form [formGroup]="form">
+    <div class="ar-form-section">
+      <div class="form-section-title">Payment Details</div>
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Customer *</mat-label>
+          <mat-select formControlName="customer_id">
+            <mat-option *ngFor="let c of customers" [value]="c.id">{{ c.name }}</mat-option>
+          </mat-select>
+          <mat-error>Customer is required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Payment Date *</mat-label>
+          <input matInput type="date" formControlName="payment_date">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Amount *</mat-label>
+          <input matInput type="number" formControlName="amount" min="0.01" step="0.01">
+          <span matPrefix>$&nbsp;</span>
+          <mat-error>Valid amount is required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Payment Method *</mat-label>
+          <mat-select formControlName="payment_method">
+            <mat-option *ngFor="let m of paymentMethods" [value]="m.value">{{ m.label }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Reference / Check Number</mat-label>
+          <input matInput formControlName="reference" placeholder="e.g., CHK-12345">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Notes</mat-label>
+          <input matInput formControlName="notes">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="ar-form-section">
+      <div class="form-section-title">Application</div>
+
+      <div style="margin-bottom: 16px;">
+        <mat-slide-toggle formControlName="auto_apply" color="primary">
+          Auto-apply to oldest open invoices
+        </mat-slide-toggle>
+      </div>
+
+      <div *ngIf="!form.get('auto_apply')?.value && openInvoices.length > 0">
+        <p style="color: var(--text-secondary); margin-bottom: 12px; font-size: 13px;">
+          Select a specific invoice to apply this payment to:
+        </p>
+        <mat-form-field appearance="outline" style="min-width: 400px;">
+          <mat-label>Apply to Invoice</mat-label>
+          <mat-select formControlName="invoice_id">
+            <mat-option [value]="null">— Unapplied —</mat-option>
+            <mat-option *ngFor="let inv of openInvoices" [value]="inv.id">
+              {{ inv.invoice_number }} — {{ inv.customer_name }} — Balance: {{ formatCurrency(inv.balance_due) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div *ngIf="openInvoices.length > 0 && form.get('customer_id')?.value" class="open-balance-info">
+        <mat-icon>info_outline</mat-icon>
+        <span>{{ openInvoices.length }} open invoice(s) with total balance of {{ formatCurrency(totalOpenBalance) }}</span>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button mat-stroked-button class="secondary-btn" type="button" routerLink="/payments">Cancel</button>
+      <button mat-raised-button class="primary-btn" type="button" (click)="save()" [disabled]="saving">
+        <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
+        <span *ngIf="!saving"><mat-icon>save</mat-icon> Record Payment</span>
+      </button>
+    </div>
+  </form>
+</div>

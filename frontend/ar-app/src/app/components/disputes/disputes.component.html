@@ -1,0 +1,73 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Disputes & Cases</h2>
+  </div>
+
+  <div class="filter-bar">
+    <mat-form-field appearance="outline">
+      <mat-label>Status</mat-label>
+      <mat-select [(ngModel)]="filterStatus" (ngModelChange)="page=1; loadDisputes()">
+        <mat-option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="ar-table-container">
+    <div *ngIf="loading" class="loading-overlay"><mat-spinner diameter="40"></mat-spinner></div>
+    <table mat-table [dataSource]="disputes" *ngIf="!loading">
+      <ng-container matColumnDef="dispute_number">
+        <th mat-header-cell *matHeaderCellDef>Dispute #</th>
+        <td mat-cell *matCellDef="let row" class="font-bold text-primary">{{ row.dispute_number }}</td>
+      </ng-container>
+      <ng-container matColumnDef="customer_name">
+        <th mat-header-cell *matHeaderCellDef>Customer</th>
+        <td mat-cell *matCellDef="let row">{{ row.customer_name }}</td>
+      </ng-container>
+      <ng-container matColumnDef="invoice_number">
+        <th mat-header-cell *matHeaderCellDef>Invoice</th>
+        <td mat-cell *matCellDef="let row">
+          <a [routerLink]="['/invoices', row.invoice_id]" class="table-link">{{ row.invoice_number }}</a>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="amount_disputed">
+        <th mat-header-cell *matHeaderCellDef class="text-right">Amount</th>
+        <td mat-cell *matCellDef="let row" class="text-right font-bold">{{ formatCurrency(row.amount_disputed) }}</td>
+      </ng-container>
+      <ng-container matColumnDef="reason">
+        <th mat-header-cell *matHeaderCellDef>Reason</th>
+        <td mat-cell *matCellDef="let row">{{ row.reason }}</td>
+      </ng-container>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="status-badge" [class]="row.status">{{ row.status | titlecase }}</span>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="created_at">
+        <th mat-header-cell *matHeaderCellDef>Opened</th>
+        <td mat-cell *matCellDef="let row" class="text-muted">{{ row.created_at | date:'MM/dd/yyyy' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row">
+          <div class="action-buttons">
+            <button mat-button class="text-btn" *ngFor="let action of getNextStatuses(row.status)"
+              (click)="updateStatus(row, action.value)" style="font-size: 12px;">
+              {{ action.label }}
+            </button>
+          </div>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+    <div *ngIf="!loading && disputes.length === 0" class="empty-state">
+      <mat-icon>gavel</mat-icon>
+      <p>No disputes found</p>
+    </div>
+    <div class="paginator-container">
+      <mat-paginator [length]="total" [pageSize]="25" [pageSizeOptions]="[10,25,50]"
+        (page)="onPage($event)" showFirstLastButtons></mat-paginator>
+    </div>
+  </div>
+</div>

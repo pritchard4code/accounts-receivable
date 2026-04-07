@@ -1,0 +1,122 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Invoices</h2>
+    <button mat-raised-button class="primary-btn" routerLink="/invoices/new">
+      <mat-icon>add</mat-icon> New Invoice
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <mat-form-field appearance="outline">
+      <mat-label>Status</mat-label>
+      <mat-select [(ngModel)]="filters.status" (ngModelChange)="onFilterChange()">
+        <mat-option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Customer</mat-label>
+      <mat-select [(ngModel)]="filters.customer_id" (ngModelChange)="onFilterChange()">
+        <mat-option [value]="undefined">All Customers</mat-option>
+        <mat-option *ngFor="let c of customers" [value]="c.id">{{ c.name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Date From</mat-label>
+      <input matInput type="date" [(ngModel)]="filters.date_from" (change)="onFilterChange()">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Date To</mat-label>
+      <input matInput type="date" [(ngModel)]="filters.date_to" (change)="onFilterChange()">
+    </mat-form-field>
+
+    <button mat-stroked-button class="secondary-btn" (click)="filters = { page: 1, size: 25 }; loadInvoices()">
+      <mat-icon>clear</mat-icon> Clear
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="ar-table-container">
+    <div *ngIf="loading" class="loading-overlay"><mat-spinner diameter="40"></mat-spinner></div>
+
+    <table mat-table [dataSource]="invoices" *ngIf="!loading">
+      <ng-container matColumnDef="invoice_number">
+        <th mat-header-cell *matHeaderCellDef>Invoice #</th>
+        <td mat-cell *matCellDef="let row">
+          <a [routerLink]="['/invoices', row.id]" class="table-link">{{ row.invoice_number }}</a>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="customer_name">
+        <th mat-header-cell *matHeaderCellDef>Customer</th>
+        <td mat-cell *matCellDef="let row">{{ row.customer_name }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="invoice_date">
+        <th mat-header-cell *matHeaderCellDef>Invoice Date</th>
+        <td mat-cell *matCellDef="let row">{{ row.invoice_date | date:'MM/dd/yyyy' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="due_date">
+        <th mat-header-cell *matHeaderCellDef>Due Date</th>
+        <td mat-cell *matCellDef="let row" [class.overdue-date]="row.status === 'overdue'">
+          {{ row.due_date | date:'MM/dd/yyyy' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="total_amount">
+        <th mat-header-cell *matHeaderCellDef class="text-right">Amount</th>
+        <td mat-cell *matCellDef="let row" class="text-right">{{ formatCurrency(row.total_amount) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="balance_due">
+        <th mat-header-cell *matHeaderCellDef class="text-right">Balance Due</th>
+        <td mat-cell *matCellDef="let row" class="text-right font-bold">{{ formatCurrency(row.balance_due) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="status-badge" [class]="row.status">{{ row.status | titlecase }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row">
+          <div class="action-buttons">
+            <button mat-icon-button (click)="viewInvoice(row.id)" matTooltip="View">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button (click)="sendInvoice(row)" *ngIf="canSend(row)" matTooltip="Send">
+              <mat-icon>send</mat-icon>
+            </button>
+            <button mat-icon-button (click)="downloadPdf(row)" matTooltip="Download PDF">
+              <mat-icon>picture_as_pdf</mat-icon>
+            </button>
+            <button mat-icon-button class="warn-btn" (click)="voidInvoice(row)" *ngIf="canVoid(row)" matTooltip="Void">
+              <mat-icon>block</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <div *ngIf="!loading && invoices.length === 0" class="empty-state">
+      <mat-icon>receipt_long</mat-icon>
+      <p>No invoices found</p>
+      <button mat-raised-button class="primary-btn" routerLink="/invoices/new">Create First Invoice</button>
+    </div>
+
+    <div class="paginator-container">
+      <mat-paginator [length]="total" [pageSize]="25" [pageSizeOptions]="[10,25,50,100]"
+        (page)="onPage($event)" showFirstLastButtons></mat-paginator>
+    </div>
+  </div>
+</div>

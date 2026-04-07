@@ -1,0 +1,119 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Reports & Analytics</h2>
+  </div>
+
+  <mat-tab-group [(selectedIndex)]="activeTab">
+
+    <!-- AR Aging Report -->
+    <mat-tab label="AR Aging">
+      <div style="padding-top: 16px;">
+        <div class="report-toolbar">
+          <div class="dso-badge">
+            <span class="dso-label">Current DSO</span>
+            <span class="dso-value">{{ dso | number:'1.0-0' }} days</span>
+          </div>
+          <button mat-stroked-button class="secondary-btn" (click)="exportAgingCsv()">
+            <mat-icon>download</mat-icon> Export CSV
+          </button>
+        </div>
+
+        <div *ngIf="loadingAging" class="loading-overlay"><mat-spinner diameter="40"></mat-spinner></div>
+
+        <div class="aging-layout" *ngIf="!loadingAging && agingReport">
+          <div class="ar-card aging-chart-card">
+            <div class="ar-card-header"><h3>Aging Distribution</h3></div>
+            <div class="ar-card-content">
+              <div class="chart-container">
+                <canvas baseChart [data]="agingPieData" [options]="agingPieOptions" type="doughnut"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="ar-card aging-totals-card">
+            <div class="ar-card-header"><h3>Aging Summary</h3></div>
+            <div class="ar-card-content">
+              <div class="aging-summary-row current">
+                <span>Current</span>
+                <span class="font-bold">{{ formatCurrency(agingTotals?.current || 0) }}</span>
+              </div>
+              <div class="aging-summary-row">
+                <span>1–30 Days</span>
+                <span>{{ formatCurrency(agingTotals?.days_1_30 || 0) }}</span>
+              </div>
+              <div class="aging-summary-row caution">
+                <span>31–60 Days</span>
+                <span>{{ formatCurrency(agingTotals?.days_31_60 || 0) }}</span>
+              </div>
+              <div class="aging-summary-row warn">
+                <span>61–90 Days</span>
+                <span>{{ formatCurrency(agingTotals?.days_61_90 || 0) }}</span>
+              </div>
+              <div class="aging-summary-row critical">
+                <span>90+ Days</span>
+                <span class="text-warn font-bold">{{ formatCurrency(agingTotals?.days_over_90 || 0) }}</span>
+              </div>
+              <div class="aging-summary-row total-row">
+                <span>Total Outstanding</span>
+                <span class="font-bold">{{ formatCurrency(agingTotals?.total || 0) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ar-table-container" style="margin-top: 16px;" *ngIf="!loadingAging && agingReport">
+          <table mat-table [dataSource]="agingReport.buckets">
+            <ng-container matColumnDef="customer_name">
+              <th mat-header-cell *matHeaderCellDef>Customer</th>
+              <td mat-cell *matCellDef="let row" class="font-bold">{{ row.customer_name }}</td>
+            </ng-container>
+            <ng-container matColumnDef="current">
+              <th mat-header-cell *matHeaderCellDef class="text-right">Current</th>
+              <td mat-cell *matCellDef="let row" class="text-right">{{ formatCurrency(row.current) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="days_1_30">
+              <th mat-header-cell *matHeaderCellDef class="text-right">1–30 Days</th>
+              <td mat-cell *matCellDef="let row" class="text-right">{{ formatCurrency(row.days_1_30) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="days_31_60">
+              <th mat-header-cell *matHeaderCellDef class="text-right">31–60 Days</th>
+              <td mat-cell *matCellDef="let row" class="text-right">{{ formatCurrency(row.days_31_60) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="days_61_90">
+              <th mat-header-cell *matHeaderCellDef class="text-right">61–90 Days</th>
+              <td mat-cell *matCellDef="let row" class="text-right">{{ formatCurrency(row.days_61_90) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="days_over_90">
+              <th mat-header-cell *matHeaderCellDef class="text-right">90+ Days</th>
+              <td mat-cell *matCellDef="let row" class="text-right text-warn">{{ formatCurrency(row.days_over_90) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="total">
+              <th mat-header-cell *matHeaderCellDef class="text-right">Total</th>
+              <td mat-cell *matCellDef="let row" class="text-right font-bold">{{ formatCurrency(row.total) }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="agingDisplayCols"></tr>
+            <tr mat-row *matRowDef="let row; columns: agingDisplayCols;"></tr>
+          </table>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Cash Collection Trend -->
+    <mat-tab label="Cash Trend">
+      <div style="padding-top: 16px;">
+        <div *ngIf="loadingTrend" class="loading-overlay"><mat-spinner diameter="40"></mat-spinner></div>
+        <div class="ar-card" *ngIf="!loadingTrend">
+          <div class="ar-card-header">
+            <h3>Collections vs. Invoiced — Last 12 Months</h3>
+          </div>
+          <div class="ar-card-content">
+            <div class="chart-container" style="height: 380px;">
+              <canvas baseChart [data]="cashTrendData" [options]="cashTrendOptions" type="bar"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

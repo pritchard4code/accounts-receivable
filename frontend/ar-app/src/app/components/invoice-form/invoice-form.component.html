@@ -1,0 +1,143 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>{{ isEdit ? 'Edit Invoice' : 'New Invoice' }}</h2>
+    <button mat-stroked-button class="secondary-btn" routerLink="/invoices">
+      <mat-icon>arrow_back</mat-icon> Back
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading-overlay"><mat-spinner diameter="40"></mat-spinner></div>
+
+  <form [formGroup]="form" *ngIf="!loading">
+    <!-- Header section -->
+    <div class="ar-form-section">
+      <div class="form-section-title">Invoice Details</div>
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Customer *</mat-label>
+          <mat-select formControlName="customer_id">
+            <mat-option *ngFor="let c of customers" [value]="c.id">{{ c.name }}</mat-option>
+          </mat-select>
+          <mat-error>Customer is required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Invoice Date *</mat-label>
+          <input matInput type="date" formControlName="invoice_date">
+          <mat-error>Invoice date is required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Due Date *</mat-label>
+          <input matInput type="date" formControlName="due_date">
+          <mat-error>Due date is required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Currency</mat-label>
+          <mat-select formControlName="currency">
+            <mat-option value="USD">USD - US Dollar</mat-option>
+            <mat-option value="EUR">EUR - Euro</mat-option>
+            <mat-option value="GBP">GBP - British Pound</mat-option>
+            <mat-option value="CAD">CAD - Canadian Dollar</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Line Items -->
+    <div class="ar-form-section">
+      <div class="form-section-title">Line Items</div>
+      <table class="line-items-table">
+        <thead>
+          <tr>
+            <th style="width: 40%">Description</th>
+            <th style="width: 10%; text-align: right;">Qty</th>
+            <th style="width: 15%; text-align: right;">Unit Price</th>
+            <th style="width: 10%; text-align: right;">Tax %</th>
+            <th style="width: 15%; text-align: right;">Total</th>
+            <th style="width: 10%;"></th>
+          </tr>
+        </thead>
+        <tbody formArrayName="line_items">
+          <tr *ngFor="let item of lineItems.controls; let i = index" [formGroupName]="i">
+            <td>
+              <mat-form-field appearance="outline">
+                <input matInput formControlName="description" placeholder="Item description">
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field appearance="outline">
+                <input matInput type="number" formControlName="quantity" min="0.01" step="1"
+                  (input)="updateLineTotal(i)" style="text-align: right;">
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field appearance="outline">
+                <input matInput type="number" formControlName="unit_price" min="0" step="0.01"
+                  (input)="updateLineTotal(i)" style="text-align: right;">
+                <span matPrefix>$&nbsp;</span>
+              </mat-form-field>
+            </td>
+            <td>
+              <mat-form-field appearance="outline">
+                <mat-select formControlName="tax_rate" (selectionChange)="updateLineTotal(i)">
+                  <mat-option *ngFor="let r of taxRates" [value]="r">{{ r }}%</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </td>
+            <td style="text-align: right; font-weight: 600; padding-right: 12px;">
+              {{ formatCurrency((item.get('quantity')?.value || 0) * (item.get('unit_price')?.value || 0)) }}
+            </td>
+            <td style="text-align: center;">
+              <button mat-icon-button type="button" (click)="removeLineItem(i)" *ngIf="lineItems.length > 1"
+                style="color: var(--warn);" matTooltip="Remove">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <button mat-stroked-button type="button" class="secondary-btn" (click)="addLineItem()" style="margin-top: 12px;">
+        <mat-icon>add</mat-icon> Add Line Item
+      </button>
+
+      <div class="invoice-totals">
+        <div class="total-row">
+          <span class="label">Subtotal</span>
+          <span class="value">{{ formatCurrency(subtotal) }}</span>
+        </div>
+        <div class="total-row">
+          <span class="label">Tax</span>
+          <span class="value">{{ formatCurrency(taxTotal) }}</span>
+        </div>
+        <div class="total-row grand-total">
+          <span class="label">Total Amount</span>
+          <span class="value">{{ formatCurrency(grandTotal) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="ar-form-section">
+      <div class="form-section-title">Additional Information</div>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-label>Notes / Terms</mat-label>
+        <textarea matInput formControlName="notes" rows="3" placeholder="Payment terms, additional notes..."></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button mat-stroked-button class="secondary-btn" type="button" routerLink="/invoices">Cancel</button>
+      <button mat-raised-button class="primary-btn" type="button" (click)="save(false)" [disabled]="saving">
+        <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
+        <span *ngIf="!saving">{{ isEdit ? 'Update Invoice' : 'Save as Draft' }}</span>
+      </button>
+      <button mat-raised-button style="background: var(--accent); color: white;" type="button" (click)="save(true)" [disabled]="saving" *ngIf="!isEdit">
+        <mat-icon>send</mat-icon> Save & Send
+      </button>
+    </div>
+  </form>
+</div>

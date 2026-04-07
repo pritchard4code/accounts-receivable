@@ -1,0 +1,205 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ar-postgres
+    environment:
+      POSTGRES_DB: accounts_receivable
+      POSTGRES_USER: aruser
+      POSTGRES_PASSWORD: arpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aruser -d accounts_receivable"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build: ./services/auth-service
+    container_name: ar-auth-service
+    environment:
+      DATABASE_URL: postgresql://aruser:arpassword@postgres:5432/accounts_receivable
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRATION_MINUTES: 480
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  invoice-service:
+    build: ./services/invoice-service
+    container_name: ar-invoice-service
+    environment:
+      DATABASE_URL: postgresql://aruser:arpassword@postgres:5432/accounts_receivable
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      JWT_ALGORITHM: HS256
+      AUTH_SERVICE_URL: http://auth-service:8001
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    restart: unless-stopped
+
+  payment-service:
+    build: ./services/payment-service
+    container_name: ar-payment-service
+    environment:
+      DATABASE_URL: postgresql://aruser:arpassword@postgres:5432/accounts_receivable
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      JWT_ALGORITHM: HS256
+      AUTH_SERVICE_URL: http://auth-service:8001
+      INVOICE_SERVICE_URL: http://invoice-service:8002
+    ports:
+      - "8003:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    restart: unless-stopped
+
+  collections-service:
+    build: ./services/collections-service
+    container_name: ar-collections-service
+    environment:
+      DATABASE_URL: postgresql://aruser:arpassword@postgres:5432/accounts_receivable
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      JWT_ALGORITHM: HS256
+      AUTH_SERVICE_URL: http://auth-service:8001
+      INVOICE_SERVICE_URL: http://invoice-service:8002
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: your-email@gmail.com
+      SMTP_PASSWORD: your-app-password
+    ports:
+      - "8004:8004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    restart: unless-stopped
+
+  credit-service:
+    build: ./services/credit-service
+    container_name: ar-credit-service
+    environment:
+      DATABASE_URL: postgresql://aruser:arpassword@postgres:5432/accounts_receivable
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      JWT_ALGORITHM: HS256
+      AUTH_SERVICE_URL: http://auth-service:8001
+    ports:
+      - "8005:8005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    restart: unless-stopped
+
+  dispute-service:
+    build: ./services/dispute-service
+    container_name: ar-dispute-service
+    environment:
+      DATABASE_URL: postgresql://aruser:arpassword@postgres:5432/accounts_receivable
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      JWT_ALGORITHM: HS256
+      AUTH_SERVICE_URL: http://auth-service:8001
+    ports:
+      - "8006:8006"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    restart: unless-stopped
+
+  reporting-service:
+    build: ./services/reporting-service
+    container_name: ar-reporting-service
+    environment:
+      DATABASE_URL: postgresql://aruser:arpassword@postgres:5432/accounts_receivable
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      JWT_ALGORITHM: HS256
+      AUTH_SERVICE_URL: http://auth-service:8001
+    ports:
+      - "8007:8007"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    restart: unless-stopped
+
+  customer-service:
+    build: ./services/customer-service
+    container_name: ar-customer-service
+    environment:
+      DATABASE_URL: postgresql://aruser:arpassword@postgres:5432/accounts_receivable
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      JWT_ALGORITHM: HS256
+      AUTH_SERVICE_URL: http://auth-service:8001
+    ports:
+      - "8008:8008"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    restart: unless-stopped
+
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: ar-api-gateway
+    environment:
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      JWT_ALGORITHM: HS256
+      AUTH_SERVICE_URL: http://auth-service:8001
+      INVOICE_SERVICE_URL: http://invoice-service:8002
+      PAYMENT_SERVICE_URL: http://payment-service:8003
+      COLLECTIONS_SERVICE_URL: http://collections-service:8004
+      CREDIT_SERVICE_URL: http://credit-service:8005
+      DISPUTE_SERVICE_URL: http://dispute-service:8006
+      REPORTING_SERVICE_URL: http://reporting-service:8007
+      CUSTOMER_SERVICE_URL: http://customer-service:8008
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth-service
+      - invoice-service
+      - payment-service
+      - collections-service
+      - credit-service
+      - dispute-service
+      - reporting-service
+      - customer-service
+    restart: unless-stopped
+
+  frontend:
+    image: node:20-alpine
+    container_name: ar-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend/ar-app:/app
+    command: sh -c "npm install && npm start"
+    ports:
+      - "4200:4200"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

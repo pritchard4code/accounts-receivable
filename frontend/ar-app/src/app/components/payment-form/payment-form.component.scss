@@ -1,0 +1,20 @@
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 0;
+}
+
+.open-balance-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #e3f2fd;
+  border-radius: var(--radius-sm);
+  color: #1565c0;
+  font-size: 13px;
+  margin-top: 8px;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}

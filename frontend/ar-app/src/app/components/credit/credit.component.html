@@ -1,0 +1,128 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Credit Management</h2>
+    <div class="flex gap-8">
+      <span class="high-risk-alert" *ngIf="highRisk.length > 0">
+        <mat-icon>warning</mat-icon>
+        {{ highRisk.length }} high-risk account(s)
+      </span>
+    </div>
+  </div>
+
+  <mat-tab-group [(selectedIndex)]="activeTab">
+    <mat-tab label="Credit Profiles">
+      <div class="ar-table-container" style="margin-top: 16px;">
+        <div *ngIf="loading" class="loading-overlay"><mat-spinner diameter="40"></mat-spinner></div>
+        <table mat-table [dataSource]="profiles" *ngIf="!loading">
+          <ng-container matColumnDef="customer_name">
+            <th mat-header-cell *matHeaderCellDef>Customer</th>
+            <td mat-cell *matCellDef="let row" class="font-bold">{{ row.customer_name }}</td>
+          </ng-container>
+          <ng-container matColumnDef="credit_limit">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Credit Limit</th>
+            <td mat-cell *matCellDef="let row" class="text-right">{{ formatCurrency(row.credit_limit) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="current_balance">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Balance</th>
+            <td mat-cell *matCellDef="let row" class="text-right font-bold">{{ formatCurrency(row.current_balance) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="available_credit">
+            <th mat-header-cell *matHeaderCellDef>Available / Utilization</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="utilization-cell">
+                <span [class.text-warn]="getUtilizationPercent(row) > 80" [class.text-success]="getUtilizationPercent(row) <= 50">
+                  {{ formatCurrency(row.available_credit) }}
+                </span>
+                <div class="utilization-bar">
+                  <div class="utilization-fill"
+                    [style.width.%]="getUtilizationPercent(row)"
+                    [class.warn]="getUtilizationPercent(row) > 80"
+                    [class.caution]="getUtilizationPercent(row) > 60">
+                  </div>
+                </div>
+                <span class="util-pct text-muted">{{ getUtilizationPercent(row) | number:'1.0-0' }}%</span>
+              </div>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="risk_level">
+            <th mat-header-cell *matHeaderCellDef>Risk</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="risk-badge" [class]="row.risk_level">{{ row.risk_level | titlecase }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="payment_score">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Pay Score</th>
+            <td mat-cell *matCellDef="let row" class="text-right">
+              <span [class.text-success]="row.payment_score >= 80"
+                    [class.text-warn]="row.payment_score < 60"
+                    class="font-bold">
+                {{ row.payment_score | number:'1.0-0' }}
+              </span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let row">
+              <button mat-icon-button (click)="updateLimit(row)" matTooltip="Edit Credit Limit">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="profileCols"></tr>
+          <tr mat-row *matRowDef="let row; columns: profileCols;"></tr>
+        </table>
+        <div *ngIf="!loading && profiles.length === 0" class="empty-state">
+          <mat-icon>credit_score</mat-icon>
+          <p>No credit profiles found</p>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab [label]="'High Risk (' + highRisk.length + ')'">
+      <div class="ar-table-container" style="margin-top: 16px;">
+        <table mat-table [dataSource]="highRisk">
+          <ng-container matColumnDef="customer_name">
+            <th mat-header-cell *matHeaderCellDef>Customer</th>
+            <td mat-cell *matCellDef="let row" class="font-bold">{{ row.customer_name }}</td>
+          </ng-container>
+          <ng-container matColumnDef="credit_limit">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Credit Limit</th>
+            <td mat-cell *matCellDef="let row" class="text-right">{{ formatCurrency(row.credit_limit) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="current_balance">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Balance</th>
+            <td mat-cell *matCellDef="let row" class="text-right font-bold text-warn">{{ formatCurrency(row.current_balance) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="available_credit">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Available</th>
+            <td mat-cell *matCellDef="let row" class="text-right">{{ formatCurrency(row.available_credit) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="risk_level">
+            <th mat-header-cell *matHeaderCellDef>Risk</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="risk-badge" [class]="row.risk_level">{{ row.risk_level | titlecase }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="payment_score">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Pay Score</th>
+            <td mat-cell *matCellDef="let row" class="text-right font-bold text-warn">{{ row.payment_score | number:'1.0-0' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let row">
+              <button mat-icon-button (click)="updateLimit(row)" matTooltip="Edit Credit Limit">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="profileCols"></tr>
+          <tr mat-row *matRowDef="let row; columns: profileCols;"></tr>
+        </table>
+        <div *ngIf="highRisk.length === 0" class="empty-state">
+          <mat-icon>check_circle_outline</mat-icon>
+          <p>No high-risk accounts</p>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

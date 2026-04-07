@@ -1,0 +1,182 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Dashboard</h2>
+    <span class="header-date">{{ today | date:'EEEE, MMMM d, yyyy' }}</span>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" *ngIf="!loadingKpis; else kpiSkeleton">
+    <div class="kpi-card">
+      <mat-icon class="kpi-icon">account_balance_wallet</mat-icon>
+      <div class="kpi-label">Total Receivables</div>
+      <div class="kpi-value">{{ formatCurrency(kpis?.total_receivables || 0) }}</div>
+      <div class="kpi-sub">Outstanding balance</div>
+    </div>
+    <div class="kpi-card warn">
+      <mat-icon class="kpi-icon">warning</mat-icon>
+      <div class="kpi-label">Overdue Amount</div>
+      <div class="kpi-value" style="color: var(--warn)">{{ formatCurrency(kpis?.overdue_amount || 0) }}</div>
+      <div class="kpi-sub">{{ kpis?.overdue_count || 0 }} overdue invoices</div>
+    </div>
+    <div class="kpi-card accent">
+      <mat-icon class="kpi-icon">speed</mat-icon>
+      <div class="kpi-label">Days Sales Outstanding</div>
+      <div class="kpi-value" style="color: var(--accent)">{{ kpis?.dso || 0 }} <small>days</small></div>
+      <div class="kpi-sub">Current DSO</div>
+    </div>
+    <div class="kpi-card success">
+      <mat-icon class="kpi-icon">trending_up</mat-icon>
+      <div class="kpi-label">Collection Rate</div>
+      <div class="kpi-value" style="color: var(--success)">{{ (kpis?.collection_rate || 0) | number:'1.1-1' }}%</div>
+      <div class="kpi-sub">This month</div>
+    </div>
+    <div class="kpi-card">
+      <mat-icon class="kpi-icon">payments</mat-icon>
+      <div class="kpi-label">Monthly Collections</div>
+      <div class="kpi-value">{{ formatCurrency(kpis?.current_month_collections || 0) }}</div>
+      <div class="kpi-sub">Current month</div>
+    </div>
+    <div class="kpi-card">
+      <mat-icon class="kpi-icon">people</mat-icon>
+      <div class="kpi-label">Total Customers</div>
+      <div class="kpi-value">{{ kpis?.total_customers || 0 }}</div>
+      <div class="kpi-sub">Active accounts</div>
+    </div>
+  </div>
+
+  <ng-template #kpiSkeleton>
+    <div class="kpi-grid">
+      <div class="kpi-card skeleton" *ngFor="let i of [1,2,3,4,5,6]">
+        <div class="skeleton-bar w-60 mb-8"></div>
+        <div class="skeleton-bar w-80 mb-4" style="height: 28px;"></div>
+        <div class="skeleton-bar w-40"></div>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Charts Row -->
+  <div class="charts-row">
+    <div class="ar-card chart-card">
+      <div class="ar-card-header">
+        <h3>AR Aging Breakdown</h3>
+        <button mat-button class="text-btn" routerLink="/reports">View Report</button>
+      </div>
+      <div class="ar-card-content">
+        <div class="chart-container">
+          <canvas baseChart
+            [data]="agingChartData"
+            [options]="agingChartOptions"
+            type="bar">
+          </canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="ar-card chart-card">
+      <div class="ar-card-header">
+        <h3>Cash Collection Trend</h3>
+        <button mat-button class="text-btn" routerLink="/reports">View Report</button>
+      </div>
+      <div class="ar-card-content">
+        <div class="chart-container">
+          <canvas baseChart
+            [data]="trendChartData"
+            [options]="trendChartOptions"
+            type="line">
+          </canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tables Row -->
+  <div class="tables-row">
+    <!-- Recent Invoices -->
+    <div class="ar-card table-card">
+      <div class="ar-card-header">
+        <h3>Recent Invoices</h3>
+        <button mat-button class="text-btn" routerLink="/invoices">View All</button>
+      </div>
+      <div *ngIf="loadingInvoices" class="loading-overlay">
+        <mat-spinner diameter="32"></mat-spinner>
+      </div>
+      <table mat-table [dataSource]="recentInvoices" *ngIf="!loadingInvoices">
+        <ng-container matColumnDef="invoice_number">
+          <th mat-header-cell *matHeaderCellDef>Invoice #</th>
+          <td mat-cell *matCellDef="let row">
+            <a [routerLink]="['/invoices', row.id]" class="link-primary">{{ row.invoice_number }}</a>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="customer_name">
+          <th mat-header-cell *matHeaderCellDef>Customer</th>
+          <td mat-cell *matCellDef="let row">{{ row.customer_name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="due_date">
+          <th mat-header-cell *matHeaderCellDef>Due Date</th>
+          <td mat-cell *matCellDef="let row">{{ row.due_date | date:'MM/dd/yyyy' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="total_amount">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Amount</th>
+          <td mat-cell *matCellDef="let row" class="text-right">{{ formatCurrency(row.total_amount) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="balance_due">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Balance</th>
+          <td mat-cell *matCellDef="let row" class="text-right font-bold">{{ formatCurrency(row.balance_due) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="status-badge" [class]="row.status">{{ row.status | titlecase }}</span>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedInvoiceCols"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedInvoiceCols;"></tr>
+      </table>
+      <div *ngIf="!loadingInvoices && recentInvoices.length === 0" class="empty-state">
+        <mat-icon>receipt_long</mat-icon>
+        <p>No invoices yet</p>
+      </div>
+    </div>
+
+    <!-- Collection Queue -->
+    <div class="ar-card table-card">
+      <div class="ar-card-header">
+        <h3>Collection Queue</h3>
+        <button mat-button class="text-btn" routerLink="/collections">View All</button>
+      </div>
+      <div *ngIf="loadingQueue" class="loading-overlay">
+        <mat-spinner diameter="32"></mat-spinner>
+      </div>
+      <table mat-table [dataSource]="collectionQueue" *ngIf="!loadingQueue">
+        <ng-container matColumnDef="customer_name">
+          <th mat-header-cell *matHeaderCellDef>Customer</th>
+          <td mat-cell *matCellDef="let row">{{ row.customer_name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="total_overdue">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Overdue</th>
+          <td mat-cell *matCellDef="let row" class="text-right text-warn font-bold">{{ formatCurrency(row.total_overdue) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="days_overdue">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Days</th>
+          <td mat-cell *matCellDef="let row" class="text-right">{{ row.days_overdue }}</td>
+        </ng-container>
+        <ng-container matColumnDef="overdue_invoices">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Invoices</th>
+          <td mat-cell *matCellDef="let row" class="text-right">{{ row.overdue_invoices }}</td>
+        </ng-container>
+        <ng-container matColumnDef="risk_level">
+          <th mat-header-cell *matHeaderCellDef>Risk</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="risk-badge" [class]="row.risk_level">{{ row.risk_level | titlecase }}</span>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedQueueCols"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedQueueCols;"></tr>
+      </table>
+      <div *ngIf="!loadingQueue && collectionQueue.length === 0" class="empty-state">
+        <mat-icon>check_circle</mat-icon>
+        <p>No overdue accounts</p>
+      </div>
+    </div>
+  </div>
+</div>

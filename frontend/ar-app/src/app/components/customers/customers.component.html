@@ -1,0 +1,155 @@
+<div class="page-container">
+  <div class="page-header">
+    <h2>Customers</h2>
+    <button mat-raised-button class="primary-btn" (click)="openAddForm()">
+      <mat-icon>add</mat-icon> Add Customer
+    </button>
+  </div>
+
+  <!-- Inline Form -->
+  <div class="ar-form-section" *ngIf="showForm">
+    <div class="form-section-title">{{ editingId ? 'Edit Customer' : 'New Customer' }}</div>
+    <form [formGroup]="form">
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Name *</mat-label>
+          <input matInput formControlName="name">
+          <mat-error>Name is required</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Email *</mat-label>
+          <input matInput type="email" formControlName="email">
+          <mat-error>Valid email required</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Phone</mat-label>
+          <input matInput formControlName="phone">
+        </mat-form-field>
+      </div>
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Address</mat-label>
+          <input matInput formControlName="address">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>City</mat-label>
+          <input matInput formControlName="city">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>State</mat-label>
+          <input matInput formControlName="state">
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Zip</mat-label>
+          <input matInput formControlName="zip">
+        </mat-form-field>
+      </div>
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Credit Limit *</mat-label>
+          <input matInput type="number" formControlName="credit_limit" min="0">
+          <span matPrefix>$&nbsp;</span>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Payment Terms *</mat-label>
+          <mat-select formControlName="payment_terms">
+            <mat-option *ngFor="let t of paymentTermsOptions" [value]="t">{{ t }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="credit_status">
+            <mat-option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Currency</mat-label>
+          <mat-select formControlName="currency">
+            <mat-option value="USD">USD</mat-option>
+            <mat-option value="EUR">EUR</mat-option>
+            <mat-option value="GBP">GBP</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="form-actions">
+        <button mat-stroked-button class="secondary-btn" type="button" (click)="showForm = false">Cancel</button>
+        <button mat-raised-button class="primary-btn" type="button" (click)="save()" [disabled]="saving">
+          <mat-spinner *ngIf="saving" diameter="20"></mat-spinner>
+          <span *ngIf="!saving">{{ editingId ? 'Update' : 'Create' }} Customer</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="filter-bar">
+    <mat-form-field appearance="outline" style="flex: 1; max-width: 400px;">
+      <mat-label>Search customers</mat-label>
+      <input matInput [(ngModel)]="search" (input)="page=1; loadCustomers()" placeholder="Name, email...">
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  <!-- Table -->
+  <div class="ar-table-container">
+    <div *ngIf="loading" class="loading-overlay"><mat-spinner diameter="40"></mat-spinner></div>
+    <table mat-table [dataSource]="customers" *ngIf="!loading">
+      <ng-container matColumnDef="customer_number">
+        <th mat-header-cell *matHeaderCellDef>Cust #</th>
+        <td mat-cell *matCellDef="let row" class="text-muted">{{ row.customer_number }}</td>
+      </ng-container>
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let row" class="font-bold">{{ row.name }}</td>
+      </ng-container>
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Email</th>
+        <td mat-cell *matCellDef="let row">{{ row.email }}</td>
+      </ng-container>
+      <ng-container matColumnDef="phone">
+        <th mat-header-cell *matHeaderCellDef>Phone</th>
+        <td mat-cell *matCellDef="let row" class="text-muted">{{ row.phone || '—' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="credit_limit">
+        <th mat-header-cell *matHeaderCellDef class="text-right">Credit Limit</th>
+        <td mat-cell *matCellDef="let row" class="text-right">{{ formatCurrency(row.credit_limit) }}</td>
+      </ng-container>
+      <ng-container matColumnDef="credit_status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="status-badge" [class]="row.credit_status === 'active' ? 'paid' : row.credit_status === 'on_hold' ? 'partial' : 'void'">
+            {{ row.credit_status | titlecase }}
+          </span>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="payment_terms">
+        <th mat-header-cell *matHeaderCellDef>Terms</th>
+        <td mat-cell *matCellDef="let row" class="text-muted">{{ row.payment_terms }}</td>
+      </ng-container>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row">
+          <div class="action-buttons">
+            <button mat-icon-button (click)="editCustomer(row)" matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button [routerLink]="['/invoices']" [queryParams]="{ customer_id: row.id }"
+              matTooltip="View Invoices">
+              <mat-icon>receipt_long</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+    <div *ngIf="!loading && customers.length === 0" class="empty-state">
+      <mat-icon>people</mat-icon>
+      <p>No customers found</p>
+    </div>
+    <div class="paginator-container">
+      <mat-paginator [length]="total" [pageSize]="25" [pageSizeOptions]="[10,25,50,100]"
+        (page)="onPage($event)" showFirstLastButtons></mat-paginator>
+    </div>
+  </div>
+</div>

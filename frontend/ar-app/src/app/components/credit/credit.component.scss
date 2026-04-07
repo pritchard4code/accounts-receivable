@@ -1,0 +1,40 @@
+.high-risk-alert {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #ffebee;
+  border-radius: 20px;
+  color: #b71c1c;
+  font-size: 13px;
+  font-weight: 600;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
+.utilization-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+
+  .utilization-bar {
+    flex: 1;
+    height: 6px;
+    background: #e0e4ea;
+    border-radius: 3px;
+    overflow: hidden;
+
+    .utilization-fill {
+      height: 100%;
+      background: var(--success);
+      border-radius: 3px;
+      transition: width 0.3s;
+
+      &.caution { background: var(--accent); }
+      &.warn { background: var(--warn); }
+    }
+  }
+
+  .util-pct { font-size: 12px; min-width: 35px; text-align: right; }
+}

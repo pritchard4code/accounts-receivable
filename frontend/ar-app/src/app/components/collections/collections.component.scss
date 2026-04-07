@@ -1,0 +1,14 @@
+.customer-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .customer-name { font-weight: 600; }
+  .customer-email { font-size: 12px; }
+}
+
+.ar-tabs {
+  .mat-mdc-tab-body-wrapper {
+    background: transparent;
+  }
+}

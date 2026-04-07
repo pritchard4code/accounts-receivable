@@ -1,0 +1,73 @@
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">AR</div>
+      <span class="logo-text">AR <span>Manager</span></span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Main Menu</div>
+      <a *ngFor="let item of navItems"
+         class="nav-item"
+         [class.active]="isActive(item.route)"
+         (click)="navigate(item.route)"
+         [title]="item.label">
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span>{{ item.label }}</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-avatar-sm">{{ getUserInitials() }}</div>
+      <div class="user-info">
+        <div class="user-name">{{ currentUser?.username }}</div>
+        <div class="user-role">{{ getRoleLabel() }}</div>
+      </div>
+      <button mat-icon-button (click)="logout()" class="logout-btn" matTooltip="Sign Out">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main area -->
+  <div class="main-area">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="header-breadcrumb">
+        <span class="header-title">Accounts Receivable</span>
+      </div>
+      <div class="header-actions">
+        <button mat-icon-button matTooltip="Notifications">
+          <mat-icon>notifications_none</mat-icon>
+        </button>
+        <button mat-icon-button matTooltip="Help">
+          <mat-icon>help_outline</mat-icon>
+        </button>
+        <div class="user-menu-btn" [matMenuTriggerFor]="userMenu">
+          <div class="user-avatar">{{ getUserInitials() }}</div>
+          <span>{{ currentUser?.username }}</span>
+          <mat-icon>arrow_drop_down</mat-icon>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+
+<mat-menu #userMenu="matMenu">
+  <div class="user-menu-header">
+    <div class="menu-user-name">{{ currentUser?.username }}</div>
+    <div class="menu-user-email">{{ currentUser?.email }}</div>
+    <div class="menu-user-role">{{ getRoleLabel() }}</div>
+  </div>
+  <mat-divider></mat-divider>
+  <button mat-menu-item (click)="logout()">
+    <mat-icon>logout</mat-icon>
+    <span>Sign Out</span>
+  </button>
+</mat-menu>

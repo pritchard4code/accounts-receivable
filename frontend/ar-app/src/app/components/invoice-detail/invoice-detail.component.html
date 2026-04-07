@@ -1,0 +1,132 @@
+<div class="page-container">
+  <div *ngIf="loading" class="loading-overlay"><mat-spinner diameter="40"></mat-spinner></div>
+
+  <ng-container *ngIf="!loading && invoice">
+    <div class="page-header">
+      <div>
+        <h2>Invoice {{ invoice.invoice_number }}</h2>
+        <span class="status-badge" [class]="invoice.status" style="margin-top: 4px; display: inline-flex;">{{ invoice.status | titlecase }}</span>
+      </div>
+      <div class="header-actions-row">
+        <button mat-stroked-button class="secondary-btn" routerLink="/invoices">
+          <mat-icon>arrow_back</mat-icon> Back
+        </button>
+        <button mat-stroked-button class="secondary-btn" [routerLink]="['/invoices', invoice.id, 'edit']"
+          *ngIf="invoice.status === 'draft'">
+          <mat-icon>edit</mat-icon> Edit
+        </button>
+        <button mat-stroked-button class="secondary-btn" (click)="downloadPdf()">
+          <mat-icon>picture_as_pdf</mat-icon> PDF
+        </button>
+        <button mat-raised-button class="primary-btn" (click)="send()"
+          *ngIf="['draft','viewed'].includes(invoice.status)">
+          <mat-icon>send</mat-icon> Send Invoice
+        </button>
+      </div>
+    </div>
+
+    <!-- Invoice Info Cards -->
+    <div class="info-grid">
+      <div class="ar-card">
+        <div class="ar-card-header"><h3>Invoice Information</h3></div>
+        <div class="ar-card-content">
+          <div class="info-row"><span class="info-label">Customer</span><span class="info-value">{{ invoice.customer_name }}</span></div>
+          <div class="info-row"><span class="info-label">Invoice Date</span><span class="info-value">{{ invoice.invoice_date | date:'MM/dd/yyyy' }}</span></div>
+          <div class="info-row"><span class="info-label">Due Date</span><span class="info-value" [class.text-warn]="invoice.status === 'overdue'">{{ invoice.due_date | date:'MM/dd/yyyy' }}</span></div>
+          <div class="info-row"><span class="info-label">Currency</span><span class="info-value">{{ invoice.currency }}</span></div>
+        </div>
+      </div>
+
+      <div class="ar-card">
+        <div class="ar-card-header"><h3>Financial Summary</h3></div>
+        <div class="ar-card-content">
+          <div class="info-row"><span class="info-label">Subtotal</span><span class="info-value">{{ formatCurrency(invoice.subtotal) }}</span></div>
+          <div class="info-row"><span class="info-label">Tax</span><span class="info-value">{{ formatCurrency(invoice.tax_amount) }}</span></div>
+          <div class="info-row"><span class="info-label">Total Amount</span><span class="info-value font-bold">{{ formatCurrency(invoice.total_amount) }}</span></div>
+          <div class="info-row"><span class="info-label">Amount Paid</span><span class="info-value text-success">{{ formatCurrency(invoice.paid_amount) }}</span></div>
+          <div class="info-row balance-row"><span class="info-label">Balance Due</span><span class="info-value font-bold" [class.text-warn]="invoice.balance_due > 0">{{ formatCurrency(invoice.balance_due) }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Line Items -->
+    <div class="ar-card mb-16">
+      <div class="ar-card-header"><h3>Line Items</h3></div>
+      <div class="ar-table-container" style="border: none; box-shadow: none; border-radius: 0;">
+        <table mat-table [dataSource]="invoice.line_items || []">
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let row">{{ row.description }}</td>
+          </ng-container>
+          <ng-container matColumnDef="quantity">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Qty</th>
+            <td mat-cell *matCellDef="let row" class="text-right">{{ row.quantity }}</td>
+          </ng-container>
+          <ng-container matColumnDef="unit_price">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Unit Price</th>
+            <td mat-cell *matCellDef="let row" class="text-right">{{ formatCurrency(row.unit_price) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="tax_rate">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Tax %</th>
+            <td mat-cell *matCellDef="let row" class="text-right">{{ row.tax_rate }}%</td>
+          </ng-container>
+          <ng-container matColumnDef="total_price">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Total</th>
+            <td mat-cell *matCellDef="let row" class="text-right font-bold">{{ formatCurrency(row.total_price) }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="lineItemCols"></tr>
+          <tr mat-row *matRowDef="let row; columns: lineItemCols;"></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="ar-card mb-16" *ngIf="invoice.notes">
+      <div class="ar-card-header"><h3>Notes</h3></div>
+      <div class="ar-card-content">{{ invoice.notes }}</div>
+    </div>
+
+    <!-- Payment History -->
+    <div class="ar-card">
+      <div class="ar-card-header">
+        <h3>Payment History</h3>
+        <button mat-raised-button class="primary-btn" [routerLink]="['/payments/new']"
+          [queryParams]="{ invoice_id: invoice.id }" *ngIf="invoice.balance_due > 0">
+          <mat-icon>add</mat-icon> Record Payment
+        </button>
+      </div>
+      <div *ngIf="payments.length === 0" class="empty-state">
+        <mat-icon>payments</mat-icon>
+        <p>No payments recorded</p>
+      </div>
+      <div class="ar-table-container" style="border: none; box-shadow: none;" *ngIf="payments.length > 0">
+        <table mat-table [dataSource]="payments">
+          <ng-container matColumnDef="payment_date">
+            <th mat-header-cell *matHeaderCellDef>Date</th>
+            <td mat-cell *matCellDef="let row">{{ row.payment_date | date:'MM/dd/yyyy' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="payment_number">
+            <th mat-header-cell *matHeaderCellDef>Payment #</th>
+            <td mat-cell *matCellDef="let row">{{ row.payment_number }}</td>
+          </ng-container>
+          <ng-container matColumnDef="payment_method">
+            <th mat-header-cell *matHeaderCellDef>Method</th>
+            <td mat-cell *matCellDef="let row">{{ getPaymentMethodLabel(row.payment_method) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Amount</th>
+            <td mat-cell *matCellDef="let row" class="text-right font-bold text-success">{{ formatCurrency(row.amount) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="status-badge" [class]="row.status">{{ row.status | titlecase }}</span>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="paymentCols"></tr>
+          <tr mat-row *matRowDef="let row; columns: paymentCols;"></tr>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+</div>
