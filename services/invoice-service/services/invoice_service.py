@@ -187,90 +187,192 @@ def generate_pdf(db: Session, invoice_id: UUID) -> bytes:
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
     from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
 
     invoice = get_invoice(db, invoice_id)
     buffer = io.BytesIO()
 
-    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    navy = colors.HexColor('#003087')
+    orange = colors.HexColor('#E87722')
+    light_bg = colors.HexColor('#f5f7fa')
+    border_color = colors.HexColor('#dce3ef')
+
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter,
+        topMargin=0.5*inch, bottomMargin=0.5*inch,
+        leftMargin=0.65*inch, rightMargin=0.65*inch
+    )
     styles = getSampleStyleSheet()
+    W = 7.2 * inch  # usable width
+
+    title_style = ParagraphStyle('InvTitle', parent=styles['Normal'],
+        textColor=navy, fontSize=26, fontName='Helvetica-Bold', spaceAfter=2)
+    label_style = ParagraphStyle('Label', parent=styles['Normal'],
+        fontName='Helvetica-Bold', fontSize=9, textColor=colors.HexColor('#555555'))
+    value_style = ParagraphStyle('Value', parent=styles['Normal'],
+        fontName='Helvetica', fontSize=9, textColor=colors.HexColor('#1a1a2e'))
+    note_style = ParagraphStyle('Note', parent=styles['Normal'],
+        fontName='Helvetica', fontSize=8.5, textColor=colors.HexColor('#1a1a2e'), leading=13)
+    bold_note_style = ParagraphStyle('BoldNote', parent=note_style,
+        fontName='Helvetica-Bold')
+    section_title_style = ParagraphStyle('SectionTitle', parent=styles['Normal'],
+        fontName='Helvetica-Bold', fontSize=8, textColor=navy,
+        textTransform='uppercase', spaceBefore=4, spaceAfter=4)
+
     story = []
 
-    # Header
-    title_style = ParagraphStyle('Title', parent=styles['Heading1'], textColor=colors.HexColor('#003087'), fontSize=24)
-    story.append(Paragraph("INVOICE", title_style))
+    # ── Header bar ──────────────────────────────────────────────────────────
+    header_data = [[
+        Paragraph("INVOICE", title_style),
+        Table([
+            [Paragraph("Invoice #", label_style), Paragraph(invoice.invoice_number, value_style)],
+            [Paragraph("Invoice Date", label_style), Paragraph(str(invoice.invoice_date), value_style)],
+            [Paragraph("Due Date", label_style), Paragraph(str(invoice.due_date), value_style)],
+            [Paragraph("Status", label_style), Paragraph(invoice.status.value.upper(), value_style)],
+        ], colWidths=[0.9*inch, 1.5*inch],
+           style=TableStyle([
+               ('FONTSIZE', (0,0), (-1,-1), 9),
+               ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+               ('TOPPADDING', (0,0), (-1,-1), 3),
+           ]))
+    ]]
+    header_table = Table(header_data, colWidths=[W - 2.6*inch, 2.6*inch])
+    header_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,0), (-1,-1), light_bg),
+        ('ROUNDEDCORNERS', [4, 4, 4, 4]),
+        ('TOPPADDING', (0,0), (-1,-1), 10),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+        ('LEFTPADDING', (0,0), (0,-1), 14),
+        ('RIGHTPADDING', (-1,0), (-1,-1), 14),
+    ]))
+    story.append(header_table)
     story.append(Spacer(1, 0.2*inch))
 
-    # Invoice info table
-    info_data = [
-        ["Invoice Number:", invoice.invoice_number, "Invoice Date:", str(invoice.invoice_date)],
-        ["Status:", invoice.status.value.upper(), "Due Date:", str(invoice.due_date)],
-        ["Currency:", invoice.currency, "Payment Terms:", f"Net {invoice.payment_terms}"],
-    ]
-    info_table = Table(info_data, colWidths=[1.5*inch, 2*inch, 1.5*inch, 2*inch])
-    info_table.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-    ]))
-    story.append(info_table)
-    story.append(Spacer(1, 0.3*inch))
-
-    # Line items
-    line_headers = ["#", "Description", "Qty", "Unit Price", "Tax Rate", "Total"]
+    # ── Line items ──────────────────────────────────────────────────────────
+    line_headers = ["#", "Description", "Qty", "Unit Price", "Tax %", "Total"]
     line_data = [line_headers]
     for i, item in enumerate(invoice.line_items, 1):
         line_data.append([
             str(i),
             item.description,
             str(item.quantity),
-            f"${item.unit_price:,.2f}",
-            f"{float(item.tax_rate)*100:.1f}%",
-            f"${item.total_price:,.2f}",
+            f"${float(item.unit_price):,.2f}",
+            f"{float(item.tax_rate) * 100:.1f}%",
+            f"${float(item.total_price):,.2f}",
         ])
 
-    line_table = Table(line_data, colWidths=[0.4*inch, 3.0*inch, 0.8*inch, 1.0*inch, 0.8*inch, 1.0*inch])
+    col_w = [0.3*inch, 3.1*inch, 0.65*inch, 0.95*inch, 0.65*inch, 0.95*inch]
+    line_table = Table(line_data, colWidths=col_w, repeatRows=1)
     line_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#003087')),
+        ('BACKGROUND', (0, 0), (-1, 0), navy),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, -1), 9),
         ('ALIGN', (2, 0), (-1, -1), 'RIGHT'),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f7fa')]),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dddddd')),
+        ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, light_bg]),
+        ('GRID', (0, 0), (-1, -1), 0.4, border_color),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
         ('TOPPADDING', (0, 0), (-1, -1), 6),
     ]))
     story.append(line_table)
-    story.append(Spacer(1, 0.2*inch))
+    story.append(Spacer(1, 0.15*inch))
 
-    # Totals
+    # ── Totals ───────────────────────────────────────────────────────────────
     totals_data = [
-        ["", "Subtotal:", f"${invoice.subtotal:,.2f}"],
-        ["", "Tax:", f"${invoice.tax_amount:,.2f}"],
-        ["", "Discount:", f"-${invoice.discount_amount:,.2f}"],
-        ["", "Total:", f"${invoice.total_amount:,.2f}"],
-        ["", "Amount Paid:", f"${invoice.paid_amount:,.2f}"],
-        ["", "Balance Due:", f"${invoice.balance_due:,.2f}"],
+        ["Subtotal:", f"${float(invoice.subtotal):,.2f}"],
+        ["Tax:", f"${float(invoice.tax_amount):,.2f}"],
+        ["Discount:", f"-${float(invoice.discount_amount):,.2f}"],
+        ["Total:", f"${float(invoice.total_amount):,.2f}"],
+        ["Amount Paid:", f"${float(invoice.paid_amount):,.2f}"],
+        ["Balance Due:", f"${float(invoice.balance_due):,.2f}"],
     ]
-    totals_table = Table(totals_data, colWidths=[4*inch, 1.5*inch, 1.5*inch])
+    totals_table = Table(totals_data, colWidths=[1.4*inch, 1.2*inch],
+                         hAlign='RIGHT')
     totals_table.setStyle(TableStyle([
-        ('FONTNAME', (1, 0), (1, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (1, -1), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
-        ('BACKGROUND', (1, -1), (-1, -1), colors.HexColor('#003087')),
-        ('TEXTCOLOR', (1, -1), (-1, -1), colors.white),
-        ('LINEABOVE', (1, -1), (-1, -1), 1, colors.HexColor('#003087')),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('FONTNAME', (0, 0), (-1, -2), 'Helvetica'),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+        ('BACKGROUND', (0, -1), (-1, -1), navy),
+        ('TEXTCOLOR', (0, -1), (-1, -1), colors.white),
+        ('LINEABOVE', (0, -1), (-1, -1), 1, navy),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
     ]))
     story.append(totals_table)
+    story.append(Spacer(1, 0.25*inch))
 
-    if invoice.notes:
-        story.append(Spacer(1, 0.2*inch))
-        story.append(Paragraph(f"<b>Notes:</b> {invoice.notes}", styles['Normal']))
+    # ── Payment instructions ─────────────────────────────────────────────────
+    story.append(HRFlowable(width=W, thickness=1.5, color=navy))
+    story.append(Spacer(1, 0.1*inch))
+
+    story.append(Paragraph(
+        "<b>Please Note:</b> If you have any questions with regards to this invoice, "
+        "please contact John Jones III @ (260) 455 7708",
+        note_style
+    ))
+    story.append(Spacer(1, 0.1*inch))
+
+    story.append(Paragraph("For accurate payment processing:", bold_note_style))
+    instructions = [
+        "Use ACH/Wire Information provided below, or if paying by check, "
+        "make the Check payable to <b>Lincoln Financial Group</b>",
+        "Include Invoice Number on the Payment",
+        "Provide detailed documentation of payment",
+    ]
+    for n, text in enumerate(instructions, 1):
+        story.append(Paragraph(f"{n}.  {text}", note_style))
+
+    story.append(Spacer(1, 0.15*inch))
+
+    # Three-column payment methods table
+    def payment_block(title, rows):
+        block = [[Paragraph(title, section_title_style)]]
+        block += [[Paragraph(f"<b>{k}</b>", note_style), Paragraph(v, note_style)] for k, v in rows]
+        t = Table(block, colWidths=[1.2*inch, 1.1*inch])
+        t.setStyle(TableStyle([
+            ('SPAN', (0, 0), (1, 0)),
+            ('BACKGROUND', (0, 0), (1, 0), light_bg),
+            ('LINEBELOW', (0, 0), (1, 0), 0.5, navy),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('BOX', (0, 0), (-1, -1), 0.5, border_color),
+        ]))
+        return t
+
+    ach_wire_rows = [
+        ("Bank Account:", "0086411258"),
+        ("Routing #:", "074900225"),
+        ("Bank Acct. Name:", "Lincoln Ret etc.."),
+        ("Bank Name:", "Wells Fargo Bank"),
+        ("ATTN:", f"(Reference {invoice.invoice_number})"),
+    ]
+
+    check_rows = [
+        ("", "Lincoln Retirement Services"),
+        ("", "Financial Controls 1H-41"),
+        ("", "PO BOX 2212"),
+        ("", "Fort Wayne, IN 46801-2212"),
+        ("ATTN:", f"(Reference {invoice.invoice_number})"),
+    ]
+
+    ach_block = payment_block("ACH Information", ach_wire_rows)
+    wire_block = payment_block("Wire Information", ach_wire_rows)
+    check_block = payment_block("Send Checks to:", check_rows)
+
+    payment_table = Table([[ach_block, wire_block, check_block]],
+                          colWidths=[W/3, W/3, W/3])
+    payment_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    story.append(payment_table)
 
     doc.build(story)
     pdf_bytes = buffer.getvalue()
