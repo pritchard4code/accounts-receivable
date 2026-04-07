@@ -56,6 +56,7 @@ import { CreditComponent } from './components/credit/credit.component';
 import { DisputesComponent } from './components/disputes/disputes.component';
 import { ReportsComponent } from './components/reports/reports.component';
 import { CustomersComponent } from './components/customers/customers.component';
+import { InvoiceDialogComponent } from './components/invoice-dialog/invoice-dialog.component';
 
 const MATERIAL_MODULES = [
   MatToolbarModule, MatSidenavModule, MatListModule, MatIconModule, MatButtonModule,
@@ -82,6 +83,7 @@ const MATERIAL_MODULES = [
     DisputesComponent,
     ReportsComponent,
     CustomersComponent,
+    InvoiceDialogComponent,
   ],
   imports: [
     BrowserModule,

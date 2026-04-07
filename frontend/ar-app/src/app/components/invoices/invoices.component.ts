@@ -1,10 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { InvoiceService } from '../../services/invoice.service';
 import { CustomerService } from '../../services/customer.service';
 import { Invoice, Customer, InvoiceFilters } from '../../models';
+import { InvoiceDialogComponent } from '../invoice-dialog/invoice-dialog.component';
 
 @Component({
   selector: 'app-invoices',
@@ -39,7 +41,8 @@ export class InvoicesComponent implements OnInit {
     private invoiceService: InvoiceService,
     private customerService: CustomerService,
     private snackBar: MatSnackBar,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -78,11 +81,20 @@ export class InvoicesComponent implements OnInit {
   }
 
   viewInvoice(id: number): void {
-    this.router.navigate(['/invoices', id]);
+    const ref = this.dialog.open(InvoiceDialogComponent, {
+      data: { invoiceId: id },
+      width: '900px',
+      maxWidth: '95vw',
+      maxHeight: '90vh',
+      panelClass: 'invoice-dialog-panel'
+    });
+    ref.afterClosed().subscribe(updated => {
+      if (updated) this.loadInvoices();
+    });
   }
 
   editInvoice(id: number): void {
-    this.router.navigate(['/invoices', id, 'edit']);
+    this.viewInvoice(id);
   }
 
   sendInvoice(inv: Invoice): void {

@@ -1,0 +1,178 @@
+<div class="dialog-container">
+  <!-- Loading -->
+  <div *ngIf="loading" class="dialog-loading">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+
+  <ng-container *ngIf="!loading && invoice">
+    <!-- Header -->
+    <div mat-dialog-title class="dialog-header">
+      <div class="dialog-title-row">
+        <div>
+          <span class="invoice-number">{{ invoice.invoice_number }}</span>
+          <span class="status-badge ml-8" [class]="invoice.status">{{ invoice.status | titlecase }}</span>
+        </div>
+        <div class="dialog-header-actions">
+          <button mat-stroked-button *ngIf="!editMode" (click)="toggleEdit()">
+            <mat-icon>edit</mat-icon> Edit
+          </button>
+          <button mat-icon-button (click)="cancel()" matTooltip="Close">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+
+      <!-- VIEW MODE -->
+      <ng-container *ngIf="!editMode">
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h4>Invoice Details</h4>
+            <div class="detail-row"><span class="label">Customer</span><span>{{ invoice.customer_name }}</span></div>
+            <div class="detail-row"><span class="label">Invoice Date</span><span>{{ invoice.invoice_date | date:'MM/dd/yyyy' }}</span></div>
+            <div class="detail-row"><span class="label">Due Date</span><span [class.overdue-text]="invoice.status === 'overdue'">{{ invoice.due_date | date:'MM/dd/yyyy' }}</span></div>
+            <div class="detail-row"><span class="label">Currency</span><span>{{ invoice.currency }}</span></div>
+            <div class="detail-row" *ngIf="invoice.notes"><span class="label">Notes</span><span>{{ invoice.notes }}</span></div>
+          </div>
+          <div class="detail-section">
+            <h4>Amounts</h4>
+            <div class="detail-row"><span class="label">Subtotal</span><span>{{ formatCurrency(invoice.subtotal) }}</span></div>
+            <div class="detail-row"><span class="label">Tax</span><span>{{ formatCurrency(invoice.tax_amount) }}</span></div>
+            <div class="detail-row total-row"><span class="label">Total</span><span>{{ formatCurrency(invoice.total_amount) }}</span></div>
+            <div class="detail-row"><span class="label">Paid</span><span class="text-success">{{ formatCurrency(invoice.paid_amount) }}</span></div>
+            <div class="detail-row balance-row"><span class="label">Balance Due</span><span>{{ formatCurrency(invoice.balance_due) }}</span></div>
+          </div>
+        </div>
+
+        <!-- Line Items View -->
+        <div *ngIf="invoice.line_items && invoice.line_items.length" class="line-items-section">
+          <h4>Line Items</h4>
+          <table class="line-items-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Tax %</th>
+                <th class="text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let li of invoice.line_items">
+                <td>{{ li.description }}</td>
+                <td class="text-right">{{ li.quantity }}</td>
+                <td class="text-right">{{ formatCurrency(li.unit_price) }}</td>
+                <td class="text-right">{{ li.tax_rate }}%</td>
+                <td class="text-right">{{ formatCurrency(li.total_price) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+
+      <!-- EDIT MODE -->
+      <ng-container *ngIf="editMode">
+        <form [formGroup]="form">
+          <div class="edit-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Customer</mat-label>
+              <mat-select formControlName="customer_id">
+                <mat-option *ngFor="let c of customers" [value]="c.id">{{ c.name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option *ngFor="let s of statusOptions" [value]="s.value">{{ s.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Invoice Date</mat-label>
+              <input matInput type="date" formControlName="invoice_date">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Due Date</mat-label>
+              <input matInput type="date" formControlName="due_date">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Currency</mat-label>
+              <input matInput formControlName="currency">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Notes</mat-label>
+              <textarea matInput formControlName="notes" rows="2"></textarea>
+            </mat-form-field>
+          </div>
+
+          <!-- Line Items Edit -->
+          <div class="line-items-section">
+            <div class="line-items-header">
+              <h4>Line Items</h4>
+              <button mat-stroked-button type="button" (click)="addLineItem()">
+                <mat-icon>add</mat-icon> Add Line
+              </button>
+            </div>
+
+            <div formArrayName="line_items">
+              <div *ngFor="let item of lineItems.controls; let i = index" [formGroupName]="i" class="line-item-row">
+                <mat-form-field appearance="outline" class="desc-field">
+                  <mat-label>Description</mat-label>
+                  <input matInput formControlName="description">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="num-field">
+                  <mat-label>Qty</mat-label>
+                  <input matInput type="number" formControlName="quantity" (input)="recalcLine(i)">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="num-field">
+                  <mat-label>Unit Price</mat-label>
+                  <input matInput type="number" formControlName="unit_price" (input)="recalcLine(i)">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="num-field">
+                  <mat-label>Tax %</mat-label>
+                  <input matInput type="number" formControlName="tax_rate" (input)="recalcLine(i)">
+                </mat-form-field>
+
+                <div class="line-total">{{ formatCurrency(item.get('total_price')?.value || 0) }}</div>
+
+                <button mat-icon-button type="button" class="remove-btn" (click)="removeLineItem(i)" matTooltip="Remove">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- Totals summary -->
+            <div class="totals-summary">
+              <div class="totals-row"><span>Subtotal</span><span>{{ formatCurrency(computedSubtotal) }}</span></div>
+              <div class="totals-row"><span>Tax</span><span>{{ formatCurrency(computedTax) }}</span></div>
+              <div class="totals-row total-row"><span>Total</span><span>{{ formatCurrency(computedTotal) }}</span></div>
+            </div>
+          </div>
+        </form>
+      </ng-container>
+
+    </mat-dialog-content>
+
+    <!-- Actions -->
+    <mat-dialog-actions class="dialog-actions">
+      <ng-container *ngIf="editMode">
+        <button mat-raised-button class="primary-btn" (click)="save()" [disabled]="saving || form.invalid">
+          <mat-spinner *ngIf="saving" diameter="18" class="inline-spinner"></mat-spinner>
+          <mat-icon *ngIf="!saving">save</mat-icon>
+          {{ saving ? 'Saving...' : 'Save Changes' }}
+        </button>
+        <button mat-stroked-button (click)="toggleEdit()" [disabled]="saving">Cancel Edit</button>
+      </ng-container>
+      <button mat-stroked-button (click)="cancel()">Close</button>
+    </mat-dialog-actions>
+  </ng-container>
+</div>
