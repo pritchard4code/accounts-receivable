@@ -34,7 +34,6 @@
             <div class="detail-row"><span class="label">Invoice Date</span><span>{{ invoice.invoice_date | date:'MM/dd/yyyy' }}</span></div>
             <div class="detail-row"><span class="label">Due Date</span><span [class.overdue-text]="invoice.status === 'overdue'">{{ invoice.due_date | date:'MM/dd/yyyy' }}</span></div>
             <div class="detail-row"><span class="label">Currency</span><span>{{ invoice.currency }}</span></div>
-            <div class="detail-row" *ngIf="invoice.notes"><span class="label">Notes</span><span>{{ invoice.notes }}</span></div>
           </div>
           <div class="detail-section">
             <h4>Amounts</h4>
@@ -69,6 +68,48 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        <!-- Payment Instructions -->
+        <div class="payment-instructions">
+          <p class="please-note"><strong>Please Note:</strong> If you have any questions with regards to this invoice, please contact John Jones III &#64; (260) 455 7708</p>
+
+          <p class="instructions-heading">For accurate payment processing:</p>
+          <ol>
+            <li>Use ACH/Wire Information provided below, or if paying by check, then make the Check payable to <strong>Lincoln Financial Group</strong></li>
+            <li>Include Invoice Number on the Payment</li>
+            <li>Provide detailed documentation of payment</li>
+          </ol>
+
+          <div class="payment-methods-grid">
+            <div class="payment-method-block">
+              <h5>ACH Information</h5>
+              <div class="payment-row"><span>Bank Account:</span><span>0086411258</span></div>
+              <div class="payment-row"><span>Routing #:</span><span>074900225</span></div>
+              <div class="payment-row"><span>Bank Acct. Name:</span><span>Lincoln Ret etc..</span></div>
+              <div class="payment-row"><span>Bank Name:</span><span>Wells Fargo Bank</span></div>
+              <div class="payment-row"><span>ATTN:</span><span>(Reference Invoice #)</span></div>
+            </div>
+
+            <div class="payment-method-block">
+              <h5>Wire Information</h5>
+              <div class="payment-row"><span>Bank Account:</span><span>0086411258</span></div>
+              <div class="payment-row"><span>Routing #:</span><span>074900225</span></div>
+              <div class="payment-row"><span>Bank Acct. Name:</span><span>Lincoln Ret etc..</span></div>
+              <div class="payment-row"><span>Bank Name:</span><span>Wells Fargo Bank</span></div>
+              <div class="payment-row"><span>ATTN:</span><span>(Reference Invoice #)</span></div>
+            </div>
+
+            <div class="payment-method-block">
+              <h5>Send Checks to:</h5>
+              <div class="check-address">
+                <p>Lincoln Retirement Services</p>
+                <p>Financial Controls 1H-41</p>
+                <p>PO BOX 2212</p>
+                <p>Fort Wayne, IN 46801-2212</p>
+                <p>ATTN: (Reference Invoice #)</p>
+              </div>
+            </div>
+          </div>
         </div>
       </ng-container>
 
