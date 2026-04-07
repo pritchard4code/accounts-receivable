@@ -56,6 +56,7 @@ export interface Invoice {
   paid_amount: number;
   balance_due: number;
   currency: string;
+  plan_id?: string;
   notes?: string;
   line_items?: InvoiceLineItem[];
   created_at?: string;

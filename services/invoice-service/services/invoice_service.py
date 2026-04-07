@@ -221,29 +221,54 @@ def generate_pdf(db: Session, invoice_id: UUID) -> bytes:
 
     story = []
 
-    # ── Header bar ──────────────────────────────────────────────────────────
-    header_data = [[
-        Paragraph("INVOICE", title_style),
-        Table([
-            [Paragraph("Invoice #", label_style), Paragraph(invoice.invoice_number, value_style)],
-            [Paragraph("Invoice Date", label_style), Paragraph(str(invoice.invoice_date), value_style)],
-            [Paragraph("Due Date", label_style), Paragraph(str(invoice.due_date), value_style)],
-            [Paragraph("Status", label_style), Paragraph(invoice.status.value.upper(), value_style)],
-        ], colWidths=[0.9*inch, 1.5*inch],
-           style=TableStyle([
-               ('FONTSIZE', (0,0), (-1,-1), 9),
-               ('BOTTOMPADDING', (0,0), (-1,-1), 3),
-               ('TOPPADDING', (0,0), (-1,-1), 3),
-           ]))
-    ]]
-    header_table = Table(header_data, colWidths=[W - 2.6*inch, 2.6*inch])
+    # ── Logo + INVOICE title block ───────────────────────────────────────────
+    import os as _os
+    logo_path = _os.path.join(_os.path.dirname(_os.path.dirname(__file__)), 'assets', 'logo.svg')
+    logo_element = None
+    if _os.path.exists(logo_path):
+        try:
+            from svglib.svglib import svg2rlg
+            drawing = svg2rlg(logo_path)
+            if drawing:
+                from reportlab.graphics import renderPDF
+                # Scale logo to fit ~2.4 inch wide, proportional height
+                target_w = 2.4 * inch
+                scale = target_w / drawing.width
+                drawing.width = target_w
+                drawing.height = drawing.height * scale
+                drawing.transform = (scale, 0, 0, scale, 0, 0)
+                logo_element = drawing
+        except Exception:
+            pass
+
+    # Build meta rows for invoice details
+    meta_rows = [
+        [Paragraph("Invoice #", label_style), Paragraph(invoice.invoice_number, value_style)],
+    ]
+    if invoice.plan_id:
+        meta_rows.append([Paragraph("Plan ID", label_style), Paragraph(str(invoice.plan_id), value_style)])
+    meta_rows += [
+        [Paragraph("Invoice Date", label_style), Paragraph(str(invoice.invoice_date), value_style)],
+        [Paragraph("Due Date", label_style), Paragraph(str(invoice.due_date), value_style)],
+        [Paragraph("Status", label_style), Paragraph(invoice.status.value.upper(), value_style)],
+    ]
+
+    meta_table = Table(meta_rows, colWidths=[0.9*inch, 1.5*inch],
+        style=TableStyle([
+            ('FONTSIZE', (0,0), (-1,-1), 9),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+            ('TOPPADDING', (0,0), (-1,-1), 3),
+        ]))
+
+    left_col = logo_element if logo_element else Paragraph("", styles['Normal'])
+    header_data = [[left_col, Paragraph("INVOICE", title_style), meta_table]]
+    header_table = Table(header_data, colWidths=[2.5*inch, W - 2.5*inch - 2.6*inch, 2.6*inch])
     header_table.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('BACKGROUND', (0,0), (-1,-1), light_bg),
-        ('ROUNDEDCORNERS', [4, 4, 4, 4]),
         ('TOPPADDING', (0,0), (-1,-1), 10),
         ('BOTTOMPADDING', (0,0), (-1,-1), 10),
-        ('LEFTPADDING', (0,0), (0,-1), 14),
+        ('LEFTPADDING', (0,0), (0,-1), 10),
         ('RIGHTPADDING', (-1,0), (-1,-1), 14),
     ]))
     story.append(header_table)

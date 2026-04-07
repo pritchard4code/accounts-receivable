@@ -15,25 +15,13 @@
   .login-brand {
     margin-bottom: 48px;
 
-    .brand-logo {
-      width: 64px;
-      height: 64px;
-      background: #E87722;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      font-weight: 900;
-      color: white;
+    .login-logo-img {
+      width: 260px;
+      height: auto;
+      display: block;
       margin-bottom: 20px;
-    }
-
-    h1 {
-      font-size: 36px;
-      font-weight: 700;
-      color: white;
-      margin-bottom: 8px;
+      // Invert to white so the dark maroon logo shows on the navy background
+      filter: brightness(0) invert(1);
     }
 
     p {

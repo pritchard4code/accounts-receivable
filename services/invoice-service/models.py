@@ -34,6 +34,7 @@ class Invoice(Base):
     balance_due = Column(Numeric(15, 2), default=0.00)
     currency = Column(String(10), default="USD")
     payment_terms = Column(Integer, default=30)
+    plan_id = Column(String(16))
     po_number = Column(String(100))
     notes = Column(Text)
     internal_notes = Column(Text)

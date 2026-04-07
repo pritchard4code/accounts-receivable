@@ -41,6 +41,7 @@ class InvoiceCreate(BaseModel):
     due_date: date
     currency: str = "USD"
     payment_terms: int = 30
+    plan_id: Optional[str] = None
     po_number: Optional[str] = None
     notes: Optional[str] = None
     internal_notes: Optional[str] = None
@@ -54,6 +55,7 @@ class InvoiceUpdate(BaseModel):
     due_date: Optional[date] = None
     currency: Optional[str] = None
     payment_terms: Optional[int] = None
+    plan_id: Optional[str] = None
     po_number: Optional[str] = None
     notes: Optional[str] = None
     internal_notes: Optional[str] = None
@@ -75,6 +77,7 @@ class InvoiceResponse(BaseModel):
     balance_due: Decimal
     currency: str
     payment_terms: int
+    plan_id: Optional[str] = None
     po_number: Optional[str] = None
     notes: Optional[str] = None
     internal_notes: Optional[str] = None

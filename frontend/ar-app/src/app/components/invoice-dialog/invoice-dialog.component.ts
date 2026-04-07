@@ -69,6 +69,7 @@ export class InvoiceDialogComponent implements OnInit {
       due_date: [inv.due_date, Validators.required],
       status: [inv.status, Validators.required],
       currency: [inv.currency, Validators.required],
+      plan_id: [inv.plan_id || '', Validators.maxLength(16)],
       notes: [inv.notes || ''],
       line_items: this.fb.array(
         (inv.line_items || []).map(li => this.fb.group({
