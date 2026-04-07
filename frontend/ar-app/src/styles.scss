@@ -2,20 +2,20 @@
 
 // Custom palette definitions
 $ar-primary-palette: (
-  50: #e6eaf5,
-  100: #bfcbe6,
-  200: #95a9d5,
-  300: #6b87c4,
-  400: #4d6db7,
-  500: #2e53aa,
-  600: #294ca3,
-  700: #23429a,
-  800: #1d3991,
-  900: #003087,
-  A100: #b9c5ff,
-  A200: #86a0ff,
-  A400: #537bff,
-  A700: #3a68ff,
+  50: #fce8ec,
+  100: #f4bfc7,
+  200: #ea939f,
+  300: #e06777,
+  400: #da4a5a,
+  500: #d22d41,
+  600: #c0263b,
+  700: #ad1f33,
+  800: #9b192b,
+  900: #AD112B,
+  A100: #ffb3bb,
+  A200: #ff8091,
+  A400: #ff4d62,
+  A700: #ff3352,
   contrast: (
     50: #000,
     100: #000,
@@ -88,9 +88,9 @@ $ar-theme: mat.define-light-theme((
 // Global Variables
 // =============================================
 :root {
-  --primary: #003087;
-  --primary-light: #1a4da0;
-  --primary-dark: #001e5a;
+  --primary: #AD112B;
+  --primary-light: #c4253f;
+  --primary-dark: #7a0c1e;
   --accent: #E87722;
   --accent-light: #f0913a;
   --warn: #d32f2f;
@@ -369,8 +369,8 @@ p { margin: 0 0 8px; }
     color: #666;
   }
   &.sent, &.pending {
-    background-color: #e3f2fd;
-    color: #1565c0;
+    background-color: #fce8ec;
+    color: #AD112B;
   }
   &.viewed {
     background-color: #e8f5e9;
@@ -397,8 +397,8 @@ p { margin: 0 0 8px; }
     color: #bf360c;
   }
   &.under_review {
-    background-color: #e3f2fd;
-    color: #0d47a1;
+    background-color: #fce8ec;
+    color: #AD112B;
   }
   &.resolved {
     background-color: #e8f5e9;

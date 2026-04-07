@@ -9,13 +9,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #e3f2fd;
+  background: #fce8ec;
   border-radius: 8px;
   padding: 10px 18px;
 
   .dso-label {
     font-size: 13px;
-    color: #1565c0;
+    color: #AD112B;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -24,7 +24,7 @@
   .dso-value {
     font-size: 22px;
     font-weight: 700;
-    color: #003087;
+    color: #AD112B;
   }
 }
 
@@ -43,7 +43,7 @@
   font-size: 14px;
 
   &:last-child { border-bottom: none; }
-  &.current { color: #003087; }
+  &.current { color: #AD112B; }
   &.caution span:last-child { color: #e65100; }
   &.warn span:last-child { color: #d32f2f; }
   &.critical span:last-child { color: #b71c1c; font-weight: 700; }
