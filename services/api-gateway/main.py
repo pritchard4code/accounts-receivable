@@ -39,6 +39,7 @@ SERVICE_ROUTES = {
     "/api/disputes": settings.dispute_service_url,
     "/api/reports": settings.reporting_service_url,
     "/api/customers": settings.customer_service_url,
+    "/api/ref": settings.invoice_service_url,
 }
 
 

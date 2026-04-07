@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.invoices import router as invoices_router
+from routers.ref import router as ref_router
 
 app = FastAPI(
     title="AR Invoice Service",
@@ -17,6 +18,7 @@ app.add_middleware(
 )
 
 app.include_router(invoices_router, prefix="/api/v1")
+app.include_router(ref_router, prefix="/api/v1")
 
 
 @app.get("/health")

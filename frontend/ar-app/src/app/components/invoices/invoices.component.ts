@@ -5,6 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { InvoiceService } from '../../services/invoice.service';
 import { CustomerService } from '../../services/customer.service';
+import { RefService } from '../../services/ref.service';
 import { Invoice, Customer, InvoiceFilters } from '../../models';
 import { InvoiceDialogComponent } from '../invoice-dialog/invoice-dialog.component';
 
@@ -23,23 +24,14 @@ export class InvoicesComponent implements OnInit {
 
   filters: InvoiceFilters = { page: 1, size: 25 };
 
-  statusOptions = [
-    { value: '', label: 'All Statuses' },
-    { value: 'draft', label: 'Draft' },
-    { value: 'sent', label: 'Sent' },
-    { value: 'viewed', label: 'Viewed' },
-    { value: 'partial', label: 'Partial' },
-    { value: 'paid', label: 'Paid' },
-    { value: 'overdue', label: 'Overdue' },
-    { value: 'void', label: 'Void' },
-    { value: 'disputed', label: 'Disputed' },
-  ];
+  statusOptions: { value: string; label: string }[] = [{ value: '', label: 'All Statuses' }];
 
   displayedColumns = ['invoice_number', 'customer_name', 'invoice_date', 'due_date', 'total_amount', 'balance_due', 'status', 'actions'];
 
   constructor(
     private invoiceService: InvoiceService,
     private customerService: CustomerService,
+    private refService: RefService,
     private snackBar: MatSnackBar,
     private router: Router,
     private dialog: MatDialog
@@ -48,6 +40,15 @@ export class InvoicesComponent implements OnInit {
   ngOnInit(): void {
     this.loadInvoices();
     this.loadCustomers();
+    this.refService.getStatuses().subscribe({
+      next: (statuses) => {
+        this.statusOptions = [
+          { value: '', label: 'All Statuses' },
+          ...statuses.map(s => ({ value: s.status_nm.toLowerCase(), label: s.status_nm.charAt(0) + s.status_nm.slice(1).toLowerCase() }))
+        ];
+      },
+      error: () => {}
+    });
   }
 
   loadInvoices(): void {

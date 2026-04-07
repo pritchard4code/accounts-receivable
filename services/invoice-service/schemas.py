@@ -100,6 +100,15 @@ class InvoiceListResponse(BaseModel):
     pages: int
 
 
+class RefStatusResponse(BaseModel):
+    status_id: UUID
+    status_nm: str
+    status_desc: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class AgingBucket(BaseModel):
     customer_id: str
     customer_name: str

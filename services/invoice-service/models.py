@@ -6,6 +6,14 @@ from sqlalchemy.orm import relationship
 from database import Base
 
 
+class RefStatus(Base):
+    __tablename__ = "ref_status"
+
+    status_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    status_nm = Column(String(50), nullable=False, unique=True)
+    status_desc = Column(String(255))
+
+
 class InvoiceStatus(str, enum.Enum):
     draft = "draft"
     sent = "sent"

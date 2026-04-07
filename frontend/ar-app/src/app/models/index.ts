@@ -200,6 +200,12 @@ export interface CashFlowForecast {
   confidence: number;
 }
 
+export interface RefStatus {
+  status_id: string;
+  status_nm: string;
+  status_desc?: string;
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;

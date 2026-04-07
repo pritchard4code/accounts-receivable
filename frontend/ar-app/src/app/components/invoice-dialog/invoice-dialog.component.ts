@@ -4,6 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { InvoiceService } from '../../services/invoice.service';
 import { CustomerService } from '../../services/customer.service';
+import { RefService } from '../../services/ref.service';
 import { Invoice, Customer } from '../../models';
 
 export interface InvoiceDialogData {
@@ -23,27 +24,29 @@ export class InvoiceDialogComponent implements OnInit {
   saving = false;
   editMode = false;
 
-  statusOptions = [
-    { value: 'draft', label: 'Draft' },
-    { value: 'sent', label: 'Sent' },
-    { value: 'viewed', label: 'Viewed' },
-    { value: 'partial', label: 'Partial' },
-    { value: 'paid', label: 'Paid' },
-    { value: 'overdue', label: 'Overdue' },
-    { value: 'void', label: 'Void' },
-    { value: 'disputed', label: 'Disputed' },
-  ];
+  statusOptions: { value: string; label: string }[] = [];
 
   constructor(
     private fb: FormBuilder,
     private invoiceService: InvoiceService,
     private customerService: CustomerService,
+    private refService: RefService,
     private snackBar: MatSnackBar,
     public dialogRef: MatDialogRef<InvoiceDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: InvoiceDialogData
   ) {}
 
   ngOnInit(): void {
+    this.refService.getStatuses().subscribe({
+      next: (statuses) => {
+        this.statusOptions = statuses.map(s => ({
+          value: s.status_nm.toLowerCase(),
+          label: s.status_nm.charAt(0) + s.status_nm.slice(1).toLowerCase()
+        }));
+      },
+      error: () => {}
+    });
+
     this.customerService.getCustomers('', 1, 200).subscribe({
       next: (res) => { this.customers = res.items; },
       error: () => {}
