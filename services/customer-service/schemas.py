@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
 
 class CustomerBase(BaseModel):
     name: str
@@ -16,7 +17,7 @@ class CustomerBase(BaseModel):
     language: Optional[str] = "en"
     credit_limit: Optional[Decimal] = Decimal("10000.00")
     credit_status: Optional[str] = "active"
-    payment_terms: Optional[str] = "NET_30"
+    payment_terms: Optional[int] = 30
 
 class CustomerCreate(CustomerBase):
     pass
@@ -26,7 +27,7 @@ class CustomerUpdate(CustomerBase):
     email: Optional[str] = None
 
 class CustomerResponse(CustomerBase):
-    id: int
+    id: UUID
     customer_number: str
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
