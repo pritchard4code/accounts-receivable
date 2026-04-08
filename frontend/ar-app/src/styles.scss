@@ -795,15 +795,14 @@ p { margin: 0 0 8px; }
 // =============================================
 // Dialog Centering (offset for fixed sidebar)
 // =============================================
-// .cdk-global-overlay-wrapper is used only for dialogs/modals, not
-// for selects or tooltips, so this safely centers dialogs within the
-// content area rather than the full viewport.
-.cdk-global-overlay-wrapper {
+// Scope padding-left only to overlays that contain a dialog panel.
+// Using the global wrapper directly breaks mat-select/mat-menu overlays.
+.cdk-overlay-container .cdk-global-overlay-wrapper:has(.mat-mdc-dialog-container) {
   padding-left: var(--sidebar-width);
 }
 
 @media (max-width: 768px) {
-  .cdk-global-overlay-wrapper {
+  .cdk-overlay-container .cdk-global-overlay-wrapper:has(.mat-mdc-dialog-container) {
     padding-left: 64px;
   }
 }
