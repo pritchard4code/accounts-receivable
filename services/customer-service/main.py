@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from typing import Optional
+from uuid import UUID
 import math
 
 from database import get_db, engine, Base
@@ -37,7 +38,7 @@ def health():
 def list_customers(
     search: Optional[str] = None,
     page: int = Query(1, ge=1),
-    size: int = Query(25, ge=1, le=100),
+    size: int = Query(25, ge=1, le=500),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user_from_token)
 ):
@@ -71,7 +72,7 @@ def create_customer(
 
 @app.get("/api/v1/customers/{customer_id}", response_model=CustomerResponse)
 def get_customer(
-    customer_id: int,
+    customer_id: UUID,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user_from_token)
 ):
@@ -83,7 +84,7 @@ def get_customer(
 
 @app.put("/api/v1/customers/{customer_id}", response_model=CustomerResponse)
 def update_customer(
-    customer_id: int,
+    customer_id: UUID,
     data: CustomerUpdate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user_from_token)
