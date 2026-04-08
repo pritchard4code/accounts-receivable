@@ -795,15 +795,15 @@ p { margin: 0 0 8px; }
 // =============================================
 // Dialog Centering (offset for fixed sidebar)
 // =============================================
-// Scope padding-left only to overlays that contain a dialog panel.
-// Using the global wrapper directly breaks mat-select/mat-menu overlays.
-.cdk-overlay-container .cdk-global-overlay-wrapper:has(.mat-mdc-dialog-container) {
-  padding-left: var(--sidebar-width);
+// panelClass 'invoice-dialog-panel' is set directly on .cdk-overlay-pane
+// by Angular Material — target it directly, no :has() needed.
+.cdk-overlay-pane.invoice-dialog-panel {
+  margin-left: calc(var(--sidebar-width) / 2);
 }
 
 @media (max-width: 768px) {
-  .cdk-overlay-container .cdk-global-overlay-wrapper:has(.mat-mdc-dialog-container) {
-    padding-left: 64px;
+  .cdk-overlay-pane.invoice-dialog-panel {
+    margin-left: 32px;
   }
 }
 
