@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Open Dispute{% endblock %}
+{% block content %}
+<h2 class="mb-1">Open a Dispute</h2>
+<p class="text-muted mb-4">Invoice {{ invoice.invoice_number }} — {{ invoice.customer.company_name }}</p>
+<div class="row"><div class="col-md-6">
+<div class="card shadow-sm">
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label class="form-label">Reason</label>
+        <select name="reason_code" class="form-select" required>
+          <option value="pricing_error">Pricing Error</option>
+          <option value="duplicate">Duplicate Invoice</option>
+          <option value="not_received">Goods/Services Not Received</option>
+          <option value="quality">Quality Issue</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description *</label>
+        <textarea name="description" class="form-control" rows="4" required
+                  placeholder="Please describe the dispute in detail..."></textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Supporting Document <small class="text-muted">(optional)</small></label>
+        <input type="file" name="document" class="form-control"
+               accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx">
+      </div>
+      <button type="submit" class="btn btn-warning">Submit Dispute</button>
+      <a href="{{ url_for('invoices.invoice_detail', invoice_id=invoice.id) }}" class="btn btn-link">Cancel</a>
+    </form>
+  </div>
+</div>
+</div></div>
+{% endblock %}

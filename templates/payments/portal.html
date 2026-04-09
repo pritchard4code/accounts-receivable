@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pay Invoice {{ invoice.invoice_number }}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body class="bg-light">
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <strong>Secure Payment Portal</strong>
+        </div>
+        <div class="card-body">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for cat, msg in messages %}
+              <div class="alert alert-{{ cat }}">{{ msg }}</div>
+            {% endfor %}
+          {% endwith %}
+
+          <h5>Invoice {{ invoice.invoice_number }}</h5>
+          <p class="text-muted">{{ invoice.customer.company_name }}</p>
+          <table class="table table-sm">
+            <tr><td>Invoice Total</td><td class="text-end">${{ "%.2f"|format(invoice.total_amount|float) }}</td></tr>
+            <tr><td>Amount Paid</td><td class="text-end text-success">${{ "%.2f"|format(invoice.amount_paid|float) }}</td></tr>
+            <tr class="fw-bold"><td>Balance Due</td><td class="text-end">${{ "%.2f"|format(invoice.balance_due|float) }}</td></tr>
+          </table>
+
+          <form id="paymentForm" method="post">
+            <div class="mb-3">
+              <label class="form-label">Amount to Pay</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" name="amount" id="payAmount" class="form-control"
+                       value="{{ "%.2f"|format(invoice.balance_due|float) }}"
+                       min="0.01" max="{{ "%.2f"|format(invoice.balance_due|float) }}"
+                       step="0.01" required>
+              </div>
+            </div>
+            <div id="card-element" class="form-control mb-3" style="height:40px;padding-top:10px"></div>
+            <div id="card-errors" class="text-danger small mb-2"></div>
+            <input type="hidden" name="stripeToken" id="stripeToken">
+            <button type="submit" class="btn btn-success w-100" id="payBtn">
+              <i class="bi bi-lock"></i> Pay Securely
+            </button>
+          </form>
+
+          <p class="text-muted small mt-3 text-center">
+            <i class="bi bi-shield-lock"></i> Payments are encrypted and processed by Stripe.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% if stripe_pub_key %}
+<script>
+const stripe = Stripe('{{ stripe_pub_key }}');
+const elements = stripe.elements();
+const card = elements.create('card');
+card.mount('#card-element');
+card.on('change', e => {
+  document.getElementById('card-errors').textContent = e.error ? e.error.message : '';
+});
+document.getElementById('paymentForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  document.getElementById('payBtn').disabled = true;
+  const { token, error } = await stripe.createToken(card);
+  if (error) {
+    document.getElementById('card-errors').textContent = error.message;
+    document.getElementById('payBtn').disabled = false;
+  } else {
+    document.getElementById('stripeToken').value = token.id;
+    e.target.submit();
+  }
+});
+</script>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Collections Queue{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2><i class="bi bi-collection"></i> Collections Queue</h2>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('collections.dunning_rules') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-gear"></i> Dunning Rules
+    </a>
+    <form method="post" action="{{ url_for('collections.trigger_dunning') }}">
+      <button class="btn btn-warning" onclick="return confirm('Run dunning cycle now?')">
+        <i class="bi bi-send"></i> Run Dunning Now
+      </button>
+    </form>
+  </div>
+</div>
+
+{% for bucket, invoices in buckets.items() %}
+{% if invoices %}
+<div class="card shadow-sm mb-3">
+  <div class="card-header fw-semibold
+    {% if bucket == '1-30' %}bg-warning text-dark
+    {% elif bucket == '31-60' %}bg-orange
+    {% elif bucket == '61-90' %}bg-danger text-white
+    {% else %}bg-dark text-white{% endif %}">
+    {{ bucket }} days past due — {{ invoices|length }} invoice(s) —
+    ${{ "%.2f"|format(invoices|sum(attribute='balance_due')|float) }}
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Invoice</th><th>Customer</th><th>Due Date</th>
+          <th class="text-end">Balance</th><th>Last Dunning</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inv in invoices %}
+        <tr>
+          <td><a href="{{ url_for('invoices.invoice_detail', invoice_id=inv.id) }}">{{ inv.invoice_number }}</a></td>
+          <td>{{ inv.customer.company_name }}</td>
+          <td>{{ inv.due_date }} <span class="badge bg-danger">{{ inv.days_overdue }}d</span></td>
+          <td class="text-end">${{ "%.2f"|format(inv.balance_due|float) }}</td>
+          <td class="small text-muted">
+            {% set last = inv.dunning_logs.order_by(none).first() %}
+            {{ last.sent_at.strftime('%m/%d/%Y') if last else 'Never' }}
+          </td>
+          <td>
+            <a href="{{ url_for('invoices.invoice_detail', invoice_id=inv.id) }}"
+               class="btn btn-sm btn-outline-primary">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% if not buckets.values()|sum(start=[]) %}
+<div class="alert alert-success"><i class="bi bi-check-circle"></i> No overdue invoices — great work!</div>
+{% endif %}
+{% endblock %}

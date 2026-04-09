@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Credit Management{% endblock %}
+{% block content %}
+<h2 class="mb-3"><i class="bi bi-shield-check"></i> Credit & Risk Management</h2>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Customer</th><th>Credit Limit</th><th>Outstanding</th><th>Available</th><th>Risk Score</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr class="{{ 'table-danger' if c.credit_status in ('hold','suspended') else 'table-warning' if c.credit_status == 'watch' else '' }}">
+          <td>{{ c.company_name }}<br><small class="text-muted">{{ c.customer_number }}</small></td>
+          <td>${{ "%.2f"|format(c.credit_limit|float) }}</td>
+          <td>${{ "%.2f"|format(c.outstanding_balance|float) }}</td>
+          <td class="{{ 'text-danger' if c.available_credit < 0 else 'text-success' }}">
+            ${{ "%.2f"|format(c.available_credit|float) }}</td>
+          <td>
+            <div class="progress" style="height:6px;width:80px">
+              <div class="progress-bar bg-{{ 'danger' if c.risk_score >= 70 else 'warning' if c.risk_score >= 40 else 'success' }}"
+                   style="width:{{ c.risk_score }}%"></div>
+            </div>
+            <small>{{ c.risk_score }}/100</small>
+          </td>
+          <td><span class="badge bg-{{ 'success' if c.credit_status=='good' else 'warning text-dark' if c.credit_status=='watch' else 'danger' if c.credit_status=='hold' else 'dark' }}">{{ c.credit_status.title() }}</span></td>
+          <td><a href="{{ url_for('credit.customer_profile', customer_id=c.id) }}" class="btn btn-sm btn-outline-primary">Manage</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

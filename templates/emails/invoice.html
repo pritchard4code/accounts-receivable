@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:auto">
+  <div style="background:#0d6efd;padding:20px;text-align:center">
+    <h2 style="color:#fff;margin:0">Invoice {{ invoice.invoice_number }}</h2>
+  </div>
+  <div style="padding:24px">
+    <p>Dear {{ invoice.customer.company_name }},</p>
+    <p>Please find your invoice attached. Payment is due by <strong>{{ invoice.due_date }}</strong>.</p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0">
+      <tr style="background:#f8f9fa"><th style="padding:8px;text-align:left">Description</th><th style="padding:8px;text-align:right">Amount</th></tr>
+      {% for li in invoice.line_items %}
+      <tr><td style="padding:8px;border-bottom:1px solid #dee2e6">{{ li.description }}</td>
+          <td style="padding:8px;text-align:right;border-bottom:1px solid #dee2e6">${{ "%.2f"|format(li.line_total|float) }}</td></tr>
+      {% endfor %}
+      <tr><td style="padding:8px;font-weight:bold">Total Due</td>
+          <td style="padding:8px;text-align:right;font-weight:bold">${{ "%.2f"|format(invoice.total_amount|float) }}</td></tr>
+    </table>
+    <p>Thank you for your business.</p>
+  </div>
+</body>
+</html>

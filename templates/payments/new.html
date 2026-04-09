@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Record Payment{% endblock %}
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-cash"></i> Record Payment</h2>
+<div class="row">
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Customer *</label>
+            <select name="customer_id" class="form-select" required>
+              <option value="">— select —</option>
+              {% for c in customers %}
+              <option value="{{ c.id }}">{{ c.company_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Amount *</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" name="amount" class="form-control"
+                     min="0.01" step="0.01" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Payment Method</label>
+            <select name="payment_method" class="form-select">
+              <option value="check">Check</option>
+              <option value="ach">ACH / EFT</option>
+              <option value="wire">Wire Transfer</option>
+              <option value="credit_card">Credit Card</option>
+              <option value="digital_wallet">Digital Wallet</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Payment Date</label>
+            <input type="date" name="payment_date" class="form-control"
+                   value="{{ today.isoformat() }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Reference / Check Number</label>
+            <input type="text" name="reference_number" class="form-control">
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Save & Apply</button>
+          <a href="{{ url_for('payments.list_payments') }}" class="btn btn-link w-100">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

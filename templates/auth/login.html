@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Lincoln Financial Group AR</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ar.css') }}">
+</head>
+<body style="background-color:#f4f6f9;">
+<div class="container">
+  <div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+      <div class="card shadow">
+        <!-- LFG branded header -->
+        <div class="login-header">
+          <img src="{{ url_for('static', filename='img/lfg-logo.svg') }}" alt="Lincoln Financial Group">
+        </div>
+        <div class="login-accent"></div>
+        <div class="card-body p-4">
+          <p class="text-muted small mb-4 text-center">Accounts Receivable Portal</p>
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for cat, msg in messages %}
+              <div class="alert alert-{{ cat }} py-2">{{ msg }}</div>
+            {% endfor %}
+          {% endwith %}
+          <form method="post">
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control" required autofocus>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input type="password" name="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Sign In</button>
+          </form>
+        </div>
+      </div>
+      <p class="text-center text-muted small mt-3">&copy; Lincoln Financial Group</p>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

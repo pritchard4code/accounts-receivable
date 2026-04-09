@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}New Dunning Rule{% endblock %}
+{% block content %}
+<h2 class="mb-4">New Dunning Rule</h2>
+<div class="row"><div class="col-md-5">
+<div class="card shadow-sm">
+  <div class="card-body">
+    <form method="post">
+      <div class="mb-3"><label class="form-label">Rule Name *</label>
+        <input type="text" name="name" class="form-control" required></div>
+      <div class="mb-3"><label class="form-label">Trigger (days past due) *</label>
+        <input type="number" name="days_past_due" class="form-control" min="1" required></div>
+      <div class="mb-3"><label class="form-label">Risk Profile</label>
+        <select name="risk_profile" class="form-select">
+          <option value="all">All</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select></div>
+      <div class="mb-3"><label class="form-label">Channel</label>
+        <select name="channel" class="form-select">
+          <option value="email">Email</option>
+          <option value="sms">SMS</option>
+          <option value="portal">Portal</option>
+        </select></div>
+      <div class="mb-3"><label class="form-label">Email Template</label>
+        <select name="template_name" class="form-select">
+          <option value="dunning_reminder">Friendly Reminder</option>
+          <option value="dunning_first_notice">First Notice</option>
+          <option value="dunning_second_notice">Second Notice</option>
+          <option value="dunning_final_demand">Final Demand</option>
+        </select></div>
+      <div class="mb-3 form-check">
+        <input type="checkbox" name="apply_late_fee" class="form-check-input" id="lateFee">
+        <label class="form-check-label" for="lateFee">Apply Late Fee</label></div>
+      <div class="mb-3"><label class="form-label">Sort Order</label>
+        <input type="number" name="sort_order" class="form-control" value="0"></div>
+      <button type="submit" class="btn btn-primary">Create Rule</button>
+      <a href="{{ url_for('collections.dunning_rules') }}" class="btn btn-link">Cancel</a>
+    </form>
+  </div>
+</div>
+</div></div>
+{% endblock %}

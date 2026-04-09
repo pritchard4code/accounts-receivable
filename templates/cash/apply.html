@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Apply Payment{% endblock %}
+{% block content %}
+<h2 class="mb-1">Apply Payment</h2>
+<p class="text-muted mb-4">{{ payment.payment_number }} — {{ payment.customer.company_name }} —
+  <strong>${{ "%.2f"|format(payment.amount_unapplied|float) }} unapplied</strong></p>
+
+<div class="row g-3">
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <dl class="mb-0">
+          <dt>Total</dt><dd>${{ "%.2f"|format(payment.amount|float) }}</dd>
+          <dt>Applied</dt><dd class="text-success">${{ "%.2f"|format(payment.amount_applied|float) }}</dd>
+          <dt>Unapplied</dt><dd class="text-warning">${{ "%.2f"|format(payment.amount_unapplied|float) }}</dd>
+          <dt>Method</dt><dd>{{ payment.payment_method }}</dd>
+        </dl>
+        {% if suggested %}
+        <hr>
+        <p class="small text-muted mb-2">Auto-match suggests {{ suggested|length }} invoice(s):</p>
+        <form method="post">
+          <button name="action" value="auto" class="btn btn-sm btn-success w-100">
+            <i class="bi bi-magic"></i> Apply Auto-Match
+          </button>
+        </form>
+        {% endif %}
+        <form method="post" class="mt-2">
+          <button name="action" value="exception" class="btn btn-sm btn-outline-warning w-100">
+            Route to Exception
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-9">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-semibold">Manual Allocation</div>
+      <div class="card-body">
+        <form method="post">
+          <input type="hidden" name="action" value="manual">
+          <table class="table table-sm">
+            <thead class="table-light">
+              <tr><th><input type="checkbox" id="selectAll"></th>
+                <th>Invoice</th><th>Due Date</th>
+                <th class="text-end">Balance</th>
+                <th style="width:130px">Allocate</th></tr>
+            </thead>
+            <tbody>
+              {% for inv in open_invoices %}
+              <tr>
+                <td><input type="checkbox" class="inv-check" data-bal="{{ inv.balance_due }}"></td>
+                <td>
+                  <input type="hidden" name="invoice_id[]" value="{{ inv.id }}" class="inv-id" disabled>
+                  <a href="{{ url_for('invoices.invoice_detail', invoice_id=inv.id) }}">{{ inv.invoice_number }}</a>
+                  <span class="badge bg-{{ 'danger' if inv.days_overdue > 30 else 'warning text-dark' if inv.days_overdue > 0 else 'secondary' }}">
+                    {{ inv.aging_bucket }}</span>
+                </td>
+                <td>{{ inv.due_date }}</td>
+                <td class="text-end">${{ "%.2f"|format(inv.balance_due|float) }}</td>
+                <td>
+                  <input type="number" name="alloc_amount[]" class="form-control form-control-sm alloc-amt"
+                         value="0" min="0" step="0.01" max="{{ inv.balance_due }}" disabled>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <button type="submit" class="btn btn-primary">Save Manual Allocation</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.inv-check').forEach(cb => {
+  cb.addEventListener('change', () => {
+    const row = cb.closest('tr');
+    const idInput = row.querySelector('.inv-id');
+    const amtInput = row.querySelector('.alloc-amt');
+    idInput.disabled = !cb.checked;
+    amtInput.disabled = !cb.checked;
+    if (cb.checked) amtInput.value = parseFloat(cb.dataset.bal).toFixed(2);
+    else amtInput.value = 0;
+  });
+});
+document.getElementById('selectAll').addEventListener('change', e => {
+  document.querySelectorAll('.inv-check').forEach(cb => {
+    cb.checked = e.target.checked;
+    cb.dispatchEvent(new Event('change'));
+  });
+});
+</script>
+{% endblock %}

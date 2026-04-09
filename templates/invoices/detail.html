@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}{{ invoice.invoice_number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h2>{{ invoice.invoice_number }}
+      <span class="badge fs-6
+        {% if invoice.status == 'paid' %}bg-success
+        {% elif invoice.status == 'overdue' %}bg-danger
+        {% elif invoice.status == 'partial' %}bg-warning text-dark
+        {% elif invoice.status == 'disputed' %}bg-secondary
+        {% else %}bg-info text-dark{% endif %}">
+        {{ invoice.status.title() }}
+      </span>
+    </h2>
+    <p class="text-muted mb-0">{{ invoice.customer.company_name }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    {% if invoice.status == 'draft' %}
+    <form method="post" action="{{ url_for('invoices.send_invoice', invoice_id=invoice.id) }}">
+      <button class="btn btn-success"><i class="bi bi-send"></i> Send to Customer</button>
+    </form>
+    {% endif %}
+    {% if invoice.status not in ('paid','void') %}
+    <a href="{{ url_for('payments.customer_portal_pay', invoice_id=invoice.id) }}"
+       class="btn btn-primary" target="_blank"><i class="bi bi-credit-card"></i> Pay Now</a>
+    <a href="{{ url_for('disputes.open_dispute', invoice_id=invoice.id) }}"
+       class="btn btn-outline-secondary"><i class="bi bi-chat-left"></i> Dispute</a>
+    {% endif %}
+    {% if current_user.role in ('finance_manager','admin') and invoice.status not in ('paid','void') %}
+    <form method="post" action="{{ url_for('invoices.void_invoice', invoice_id=invoice.id) }}"
+          onsubmit="return confirm('Void this invoice?')">
+      <button class="btn btn-outline-danger">Void</button>
+    </form>
+    {% endif %}
+    <a href="{{ url_for('invoices.invoice_pdf', invoice_id=invoice.id) }}"
+       class="btn btn-outline-primary" title="Download PDF">
+      <i class="bi bi-file-earmark-pdf"></i> PDF
+    </a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-8">
+    <!-- Invoice document -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="row mb-4 align-items-start">
+          <div class="col">
+            <img src="{{ url_for('static', filename='img/lfg-logo.svg') }}"
+                 alt="Lincoln Financial Group"
+                 style="height:44px; margin-bottom:6px; display:block;">
+            <small class="text-muted">{{ company_address }}</small>
+          </div>
+          <div class="col text-end">
+            <strong>Bill To:</strong><br>
+            {{ invoice.customer.company_name }}<br>
+            {{ invoice.customer.contact_name }}<br>
+            {{ invoice.customer.email }}
+          </div>
+        </div>
+
+        <div class="row mb-3 small text-muted">
+          <div class="col"><strong>Invoice #:</strong> {{ invoice.invoice_number }}</div>
+          <div class="col"><strong>Issue Date:</strong> {{ invoice.issue_date }}</div>
+          <div class="col"><strong>Due Date:</strong> {{ invoice.due_date }}</div>
+        </div>
+
+        <table class="table table-sm">
+          <thead class="table-light">
+            <tr>
+              <th>Description</th>
+              <th class="text-end">Qty</th>
+              <th class="text-end">Unit Price</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for li in invoice.line_items %}
+            <tr>
+              <td>{{ li.description }}</td>
+              <td class="text-end">{{ li.quantity }}</td>
+              <td class="text-end">${{ "%.2f"|format(li.unit_price|float) }}</td>
+              <td class="text-end">${{ "%.2f"|format(li.line_total|float) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr><td colspan="3" class="text-end">Subtotal</td><td class="text-end">${{ "%.2f"|format(invoice.subtotal|float) }}</td></tr>
+            <tr><td colspan="3" class="text-end">Tax</td><td class="text-end">${{ "%.2f"|format(invoice.tax_amount|float) }}</td></tr>
+            {% if invoice.late_fee_amount %}
+            <tr class="text-danger"><td colspan="3" class="text-end">Late Fee</td><td class="text-end">${{ "%.2f"|format(invoice.late_fee_amount|float) }}</td></tr>
+            {% endif %}
+            <tr class="fw-bold"><td colspan="3" class="text-end">Total Due</td><td class="text-end">${{ "%.2f"|format(invoice.balance_due|float) }}</td></tr>
+          </tfoot>
+        </table>
+
+        {% if invoice.notes %}<p class="text-muted small mt-2"><strong>Notes:</strong> {{ invoice.notes }}</p>{% endif %}
+
+        <!-- ── Payment instructions ── -->
+        <hr style="border-top:2px solid #FF4F17; margin-top:1.25rem; margin-bottom:1rem;">
+
+        <p class="small mb-2">
+          <strong>Please Note:</strong> If you have any questions with regards to this invoice,
+          please contact <strong>Andrew Elliot @ (260) 334&#8209;4456</strong>
+        </p>
+
+        <p class="small fw-semibold mb-1">For accurate payment processing:</p>
+        <ol class="small mb-3">
+          <li>Use ACH/Wire information provided below or, if paying by check, make the check payable to <strong>"Lincoln Financial Group"</strong></li>
+          <li>Include <strong>"Invoice Number"</strong> on payment</li>
+          <li>Provide detailed documentation of payment</li>
+        </ol>
+
+        <div class="row g-3 small">
+          <div class="col-md-4">
+            <div class="border rounded overflow-hidden">
+              <div class="px-3 py-2 fw-semibold text-white" style="background:#650030;">ACH Information</div>
+              <div class="px-3 py-2 bg-light">
+                <div><strong>Bank Account:</strong> 0086433344</div>
+                <div><strong>Routing #:</strong> 074977334</div>
+                <div><strong>Acct. Name:</strong> Linc Ret SVCS Corp</div>
+                <div><strong>Bank:</strong> Wells Fargo Bank, NA.</div>
+                <div class="text-muted mt-1">ATTN: (Reference Invoice #)</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded overflow-hidden">
+              <div class="px-3 py-2 fw-semibold text-white" style="background:#650030;">Wire Information</div>
+              <div class="px-3 py-2 bg-light">
+                <div><strong>Bank Account:</strong> 0086433344</div>
+                <div><strong>Routing #:</strong> 121977334</div>
+                <div><strong>Acct. Name:</strong> Linc Ret SVCS Corp</div>
+                <div><strong>Bank:</strong> Wells Fargo Bank, NA.</div>
+                <div class="text-muted mt-1">ATTN: (Reference Invoice #)</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="border rounded overflow-hidden">
+              <div class="px-3 py-2 fw-semibold text-white" style="background:#650030;">Send Checks To</div>
+              <div class="px-3 py-2 bg-light">
+                <div>Lincoln Retirement Services</div>
+                <div>Financial Controls 1H&#8209;41</div>
+                <div>PO Box 2212</div>
+                <div>Fort Wayne, IN 46801&#8209;2212</div>
+                <div class="text-muted mt-1">ATTN: (Reference Invoice #)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <!-- Payment history -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Payment History</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tbody>
+            {% for alloc in invoice.payment_allocations %}
+            <tr>
+              <td>{{ alloc.payment.payment_date }}</td>
+              <td>{{ alloc.payment.payment_method }}</td>
+              <td class="text-end text-success">${{ "%.2f"|format(alloc.amount_allocated|float) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-muted small text-center py-2">No payments yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Dunning history -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Dunning History</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tbody>
+            {% for log in invoice.dunning_logs %}
+            <tr>
+              <td>{{ log.sent_at.strftime('%m/%d') }}</td>
+              <td class="small">{{ log.subject[:40] }}...</td>
+              <td><span class="badge bg-{{ 'success' if log.status=='sent' else 'danger' }}">{{ log.status }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-muted small text-center py-2">No dunning sent</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Dispute info -->
+    {% if invoice.dispute %}
+    <div class="card shadow-sm border-warning">
+      <div class="card-header bg-warning text-dark fw-semibold">Active Dispute</div>
+      <div class="card-body">
+        <p class="mb-1"><strong>{{ invoice.dispute.dispute_number }}</strong></p>
+        <p class="mb-1 small">{{ invoice.dispute.reason_code.replace('_',' ').title() }}</p>
+        <span class="badge bg-secondary">{{ invoice.dispute.status.replace('_',' ').title() }}</span>
+        <a href="{{ url_for('disputes.dispute_detail', dispute_id=invoice.dispute.id) }}"
+           class="btn btn-sm btn-outline-warning mt-2 w-100">View Dispute</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

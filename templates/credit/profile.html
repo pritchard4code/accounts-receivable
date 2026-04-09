@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.company_name }} – Credit{% endblock %}
+{% block content %}
+<h2 class="mb-1">{{ customer.company_name }}</h2>
+<p class="text-muted mb-4">{{ customer.customer_number }} · {{ customer.email }}</p>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Credit Profile</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-7">Credit Limit</dt><dd class="col-5">${{ "%.2f"|format(customer.credit_limit|float) }}</dd>
+          <dt class="col-7">Outstanding</dt><dd class="col-5">${{ "%.2f"|format(customer.outstanding_balance|float) }}</dd>
+          <dt class="col-7">Available</dt><dd class="col-5 {{ 'text-danger' if customer.available_credit < 0 else 'text-success' }}">${{ "%.2f"|format(customer.available_credit|float) }}</dd>
+          <dt class="col-7">Risk Score</dt><dd class="col-5">{{ customer.risk_score }}/100</dd>
+          <dt class="col-7">Status</dt><dd class="col-5"><span class="badge bg-{{ 'success' if customer.credit_status=='good' else 'warning text-dark' if customer.credit_status=='watch' else 'danger' }}">{{ customer.credit_status.title() }}</span></dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Update Credit Limit</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('credit.update_limit', customer_id=customer.id) }}">
+          <div class="mb-2">
+            <label class="form-label small">New Limit</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">$</span>
+              <input type="number" name="credit_limit" class="form-control"
+                     value="{{ customer.credit_limit }}" step="0.01" min="0">
+            </div>
+          </div>
+          <div class="mb-2">
+            <input type="text" name="reason" class="form-control form-control-sm" placeholder="Reason">
+          </div>
+          <button class="btn btn-sm btn-primary w-100">Update Limit</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Set Credit Status</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('credit.set_status', customer_id=customer.id) }}">
+          <div class="mb-2">
+            <select name="credit_status" class="form-select form-select-sm">
+              {% for s in ['good','watch','hold','suspended'] %}
+              <option value="{{ s }}" {{ 'selected' if s == customer.credit_status }}>{{ s.title() }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <input type="text" name="reason" class="form-control form-control-sm" placeholder="Reason">
+          </div>
+          <button class="btn btn-sm btn-warning w-100">Update Status</button>
+        </form>
+      </div>
+    </div>
+
+    <form method="post" action="{{ url_for('credit.refresh_score', customer_id=customer.id) }}">
+      <button class="btn btn-sm btn-outline-secondary w-100">
+        <i class="bi bi-arrow-clockwise"></i> Recalculate Risk Score
+      </button>
+    </form>
+  </div>
+
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-semibold">Credit Event History</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr><th>Date</th><th>Event</th><th>Old</th><th>New</th><th>By</th><th>Reason</th></tr>
+          </thead>
+          <tbody>
+            {% for e in events %}
+            <tr>
+              <td class="small">{{ e.created_at.strftime('%m/%d/%Y %H:%M') }}</td>
+              <td><span class="badge bg-secondary">{{ e.event_type.replace('_',' ') }}</span></td>
+              <td class="small">{{ e.old_value }}</td>
+              <td class="small">{{ e.new_value }}</td>
+              <td class="small">{{ e.created_by.full_name if e.created_by else '—' }}</td>
+              <td class="small text-muted">{{ e.reason or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-muted text-center py-3">No credit events</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

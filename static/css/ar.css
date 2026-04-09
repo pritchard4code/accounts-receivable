@@ -1,0 +1,203 @@
+/* AR System – Lincoln Financial Group theme */
+
+/* ── LFG Brand tokens ─────────────────────────────────── */
+:root {
+  --lfg-maroon:  #650030;
+  --lfg-orange:  #FF4F17;
+  --lfg-maroon-dark: #4a0023;
+  --lfg-maroon-light: #8a0040;
+  --lfg-orange-light: #ff6e3a;
+
+  /* Override Bootstrap primary */
+  --bs-primary:        #650030;
+  --bs-primary-rgb:    101, 0, 48;
+  --bs-link-color:     #650030;
+  --bs-link-hover-color: #4a0023;
+}
+
+/* ── Base ─────────────────────────────────────────────── */
+body {
+  background-color: #f4f6f9;
+  font-size: 0.9rem;
+}
+
+/* ── Navbar ───────────────────────────────────────────── */
+.navbar.bg-primary,
+.navbar-dark.bg-primary {
+  background-color: var(--lfg-maroon) !important;
+  border-bottom: 3px solid var(--lfg-orange);
+}
+
+.navbar-brand {
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
+}
+
+.navbar-brand img {
+  /* Invert the SVG so the maroon wordmark shows white on dark navbar */
+  filter: brightness(0) invert(1);
+  height: 36px;
+}
+
+.navbar-dark .nav-link:hover,
+.navbar-dark .nav-link:focus {
+  color: var(--lfg-orange) !important;
+}
+
+.navbar-dark .nav-link.active {
+  color: var(--lfg-orange) !important;
+  border-bottom: 2px solid var(--lfg-orange);
+}
+
+/* ── Buttons ──────────────────────────────────────────── */
+.btn-primary {
+  background-color: var(--lfg-maroon);
+  border-color: var(--lfg-maroon);
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: var(--lfg-maroon-dark) !important;
+  border-color: var(--lfg-maroon-dark) !important;
+}
+.btn-outline-primary {
+  color: var(--lfg-maroon);
+  border-color: var(--lfg-maroon);
+}
+.btn-outline-primary:hover {
+  background-color: var(--lfg-maroon);
+  border-color: var(--lfg-maroon);
+  color: #fff;
+}
+
+/* ── Links ────────────────────────────────────────────── */
+a {
+  color: var(--lfg-maroon);
+}
+a:hover {
+  color: var(--lfg-maroon-dark);
+}
+
+/* ── Cards ────────────────────────────────────────────── */
+.card {
+  border-radius: 8px;
+}
+.card-header {
+  border-bottom: 1px solid #e9ecef;
+  font-size: 0.875rem;
+}
+.card-header.bg-primary {
+  background-color: var(--lfg-maroon) !important;
+}
+
+/* ── KPI / accent strip ───────────────────────────────── */
+.border-primary {
+  border-color: var(--lfg-maroon) !important;
+}
+.text-primary {
+  color: var(--lfg-maroon) !important;
+}
+.bg-primary {
+  background-color: var(--lfg-maroon) !important;
+}
+
+/* ── Badges ───────────────────────────────────────────── */
+.badge {
+  font-weight: 500;
+  font-size: 0.72rem;
+}
+.badge.bg-primary { background-color: var(--lfg-maroon) !important; }
+.badge.bg-warning  { background-color: var(--lfg-orange)  !important; color: #fff !important; }
+
+/* ── Aging bucket colours ─────────────────────────────── */
+.bg-orange {
+  background-color: var(--lfg-orange) !important;
+  color: #fff;
+}
+
+/* ── Tables ───────────────────────────────────────────── */
+.table th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6c757d;
+  font-weight: 600;
+}
+.table td {
+  vertical-align: middle;
+}
+
+/* ── KPI numbers ──────────────────────────────────────── */
+.fs-4.fw-bold {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Sticky nav ───────────────────────────────────────── */
+.sticky-top {
+  z-index: 100;
+}
+
+/* ── Stripe card element ──────────────────────────────── */
+#card-element {
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: #fff;
+}
+
+/* ── Progress bars ────────────────────────────────────── */
+.progress {
+  border-radius: 3px;
+}
+.progress-bar {
+  background-color: var(--lfg-maroon);
+}
+.progress-bar.bg-warning {
+  background-color: var(--lfg-orange) !important;
+}
+
+/* ── Alerts ───────────────────────────────────────────── */
+.alert {
+  font-size: 0.875rem;
+}
+
+/* ── Dashboard chart canvas ───────────────────────────── */
+canvas {
+  max-height: 220px;
+}
+
+/* ── Dropdown active state ────────────────────────────── */
+.dropdown-item:active,
+.dropdown-item.active {
+  background-color: var(--lfg-maroon);
+}
+
+/* ── Login page ───────────────────────────────────────── */
+.login-header {
+  background-color: var(--lfg-maroon);
+  padding: 1.5rem;
+  border-radius: 8px 8px 0 0;
+  text-align: center;
+}
+.login-header img {
+  height: 52px;
+  /* SVG has maroon/orange colours; invert to white on dark background */
+  filter: brightness(0) invert(1);
+}
+.login-accent {
+  height: 4px;
+  background: linear-gradient(90deg, var(--lfg-maroon), var(--lfg-orange));
+}
+
+/* ── Page header accent ───────────────────────────────── */
+.page-header-accent {
+  border-left: 4px solid var(--lfg-orange);
+  padding-left: 0.75rem;
+}
+
+/* ── Print styles ─────────────────────────────────────── */
+@media print {
+  .navbar, .btn, .alert, nav { display: none !important; }
+  .card { border: none !important; box-shadow: none !important; }
+  body { background: #fff; }
+}
